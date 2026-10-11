@@ -1,15 +1,15 @@
 export const CREATE_VAULT_METADATA_TABLE = `
- CREATE TABLE IF NOT EXISTS valut_metadata (
-    id INTEGER PRIMARY KEY CHECK (id = 1),
-    salt TEXT NOT NULL,
-    encrypted_dek TEXT NOT NULL,
-    dek_iv TEXT NOT NULL,
-    dek_tag TEXT NOT NULL,
-    recovery_encrypted_dek TEXT NOT NULL,
-    recovery_iv TEXT NOT NULL,
-    recovery_tag TEXT NOT NULL,
-    is_biometric_enabled INTEGER DEFAULT 0,
-    created_at INTEGER NOT NULL
+CREATE TABLE IF NOT EXISTS vault_metadata (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  salt TEXT NOT NULL,
+  encrypted_dek TEXT NOT NULL,
+  dek_iv TEXT NOT NULL,
+  dek_tag TEXT NOT NULL,
+  recovery_encrypted_dek TEXT NOT NULL,
+  recovery_iv TEXT NOT NULL,
+  recovery_tag TEXT NOT NULL,
+  is_biometric_enabled INTEGER DEFAULT 0,
+  created_at INTEGER NOT NULL
 );
 `;
 

@@ -1,48 +1,60 @@
-import { getRandomBytes, bytesToHex, hexToBytes } from './random';
-import { generateSalt, deriveKeyFromPassword } from './kdf';
-import { encryptAESGCM, decryptAESGCM } from './aes';
-import {
-  generateRecoveryMnemonic,
-  deriveKeyFromMnemonic,
-} from './mnemonic';
-import { EnvelopeMetadata } from '../types/crypto';
+import { getRandomBytes, bytesToHex, hexToBytes } from "./random";
+import { generateSalt, deriveKeyFromPassword } from "./kdf";
+import { encryptAESGCM, decryptAESGCM } from "./aes";
+import { generateRecoveryMnemonic, deriveKeyFromMnemonic } from "./mnemonic";
+import { EnvelopeMetadata } from "../types/crypto";
 
-export function initializeEnvelope(masterPassword: string): EnvelopeMetadata {
-  const salt = generateSalt(32);
-  const kek = deriveKeyFromPassword(masterPassword, salt);
+export interface EnvelopeInitResult {
+    metadata: EnvelopeMetadata;
+    dek: Uint8Array;
+}
 
-  const dek = getRandomBytes(32);
-  const dekHex = bytesToHex(dek);
+export function initializeEnvelope(masterPassword: string): EnvelopeInitResult {
+    const salt = generateSalt(32);
+    const kek = deriveKeyFromPassword(masterPassword, salt);
 
-  const encryptedDek = encryptAESGCM(dekHex, kek);
+    const dek = getRandomBytes(32);
+    const dekHex = bytesToHex(dek);
 
-  const mnemonic = generateRecoveryMnemonic();
-  const recoveryKek = deriveKeyFromMnemonic(mnemonic);
-  const recoveryEncryptedDek = encryptAESGCM(dekHex, recoveryKek);
+    const encryptedDek = encryptAESGCM(dekHex, kek);
 
-  return {
-    salt,
-    encryptedDek,
-    recoveryEncryptedDek,
-    mnemonic,
-  };
+    const mnemonic = generateRecoveryMnemonic();
+    const recoveryKek = deriveKeyFromMnemonic(mnemonic);
+    const recoveryEncryptedDek = encryptAESGCM(dekHex, recoveryKek);
+
+    return {
+        metadata: {
+            salt,
+            encryptedDek,
+            recoveryEncryptedDek,
+            mnemonic,
+        },
+        dek,
+    };
 }
 
 export function unlockDekWithPassword(
-  masterPassword: string,
-  saltHex: string,
-  encryptedDekPayload: { ciphertext: string; iv: string; tag: string }
+    masterPassword: string,
+    saltHex: string,
+    encryptedDekPayload: { ciphertext: string; iv: string; tag: string },
 ): Uint8Array {
-  const kek = deriveKeyFromPassword(masterPassword, saltHex);
-  const decryptedHex = decryptAESGCM(encryptedDekPayload, kek);
-  return hexToBytes(decryptedHex);
+    const kek = deriveKeyFromPassword(masterPassword, saltHex);
+    const decryptedHex = decryptAESGCM(encryptedDekPayload, kek);
+    return hexToBytes(decryptedHex);
 }
 
 export function unlockDekWithMnemonic(
-  mnemonic: string,
-  recoveryEncryptedDekPayload: { ciphertext: string; iv: string; tag: string }
+    mnemonic: string,
+    recoveryEncryptedDekPayload: {
+        ciphertext: string;
+        iv: string;
+        tag: string;
+    },
 ): Uint8Array {
-  const recoveryKek = deriveKeyFromMnemonic(mnemonic);
-  const decryptedHex = decryptAESGCM(recoveryEncryptedDekPayload, recoveryKek);
-  return hexToBytes(decryptedHex);
+    const recoveryKek = deriveKeyFromMnemonic(mnemonic);
+    const decryptedHex = decryptAESGCM(
+        recoveryEncryptedDekPayload,
+        recoveryKek,
+    );
+    return hexToBytes(decryptedHex);
 }
