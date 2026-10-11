@@ -10,7 +10,7 @@ The application ensures complete privacy by isolating sensitive credentials on-d
 
 SafeVault is currently in its initial public **Beta (v1.0.0-beta)** testing milestone!
 
-- **Download:** Get the compiled standalone APK from the [GitHub Releases](https://github.com/kunalsambyal/SafeVault/releases) section.
+- **Download:** Get the compiled standalone APK from the [GitHub Releases](https://github.com/KunalSambyal/SafeVault-PasswordManager/releases) section.
 - **Feedback & Contributions:** Download the beta app, test it, and report bugs, improvements, or UI tweaks. If you find SafeVault useful or support offline-first software, giving a star on GitHub would be greatly appreciated!
 - **Important Note:** As this is an early beta release, please do not rely on SafeVault as your sole storage for critical passwords yet. File export and automated backup features are in active development.
 
@@ -27,7 +27,7 @@ Detailed technical documentation and development plans are available in the repo
 
 ## Download Beta
 
-- **Releases:** [https://github.com/kunalsambyal/SafeVault/releases](https://github.com/kunalsambyal/SafeVault/releases)
+- **Releases:** [https://github.com/kunalsambyal/SafeVault/releases](https://github.com/KunalSambyal/SafeVault-PasswordManager/releases)
 
 ---
 
