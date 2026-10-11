@@ -12,6 +12,8 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useVault } from "../hooks/useVault";
 import { addCredential, updateCredential } from "../db";
 import { encryptAESGCM } from "../crypto";
+import { PasswordStrengthBar } from "../components/PasswordStrengthBar";
+import { PasswordGeneratorModal } from "../components/PasswordGeneratorModal";
 import { RootStackParamList } from "../types/navigation";
 import { colors } from "../theme/colors";
 
@@ -36,6 +38,7 @@ export function AddEditCredentialModal({
     const [label, setLabel] = useState(initialLabel || "");
     const [password, setPassword] = useState("");
     const [isMasked, setIsMasked] = useState(true);
+    const [generatorVisible, setGeneratorVisible] = useState(false);
 
     async function handleSave() {
         if (!identity.trim() || !label.trim() || !password.trim()) {
@@ -104,7 +107,13 @@ export function AddEditCredentialModal({
                 onChangeText={setLabel}
             />
 
-            <Text style={styles.label}>Password</Text>
+            <View style={styles.passwordHeader}>
+                <Text style={styles.label}>Password</Text>
+                <TouchableOpacity onPress={() => setGeneratorVisible(true)}>
+                    <Text style={styles.generateLink}>Generate</Text>
+                </TouchableOpacity>
+            </View>
+
             <View style={styles.passwordRow}>
                 <TextInput
                     style={[styles.input, styles.passwordInput]}
@@ -124,6 +133,8 @@ export function AddEditCredentialModal({
                 </TouchableOpacity>
             </View>
 
+            <PasswordStrengthBar password={password} />
+
             <View style={styles.buttonRow}>
                 <TouchableOpacity
                     style={styles.cancelButton}
@@ -139,6 +150,15 @@ export function AddEditCredentialModal({
                     <Text style={styles.saveButtonText}>Save</Text>
                 </TouchableOpacity>
             </View>
+
+            <PasswordGeneratorModal
+                visible={generatorVisible}
+                onClose={() => setGeneratorVisible(false)}
+                onApplyPassword={(generatedPassword) => {
+                    setPassword(generatedPassword);
+                    setIsMasked(false);
+                }}
+            />
         </View>
     );
 }
@@ -162,6 +182,17 @@ const styles = StyleSheet.create({
         marginBottom: 6,
         fontWeight: "600",
     },
+    passwordHeader: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 6,
+    },
+    generateLink: {
+        color: colors.primary,
+        fontSize: 13,
+        fontWeight: "700",
+    },
     input: {
         backgroundColor: colors.inputBackground,
         borderWidth: 1,
@@ -176,7 +207,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         gap: 8,
-        marginBottom: 16,
+        marginBottom: 4,
     },
     passwordInput: {
         flex: 1,

@@ -18,15 +18,23 @@ import { colors } from "../theme/colors";
 export function UnlockScreen() {
     const {
         unlockWithPassword,
-        unlockWithMnemonicPhrase,
+        prepareRecoveryWithMnemonic,
+        abortRecovery,
+        resetMasterPassword,
         unlockWithBiometricSession,
     } = useVault();
+
     const [password, setPassword] = useState("");
     const [useRecovery, setUseRecovery] = useState(false);
     const [mnemonic, setMnemonic] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
     const [hasBiometrics, setHasBiometrics] = useState(false);
+
+    // Recovery Password Reset states
+    const [isResettingPassword, setIsResettingPassword] = useState(false);
+    const [newPassword, setNewPassword] = useState("");
+    const [confirmNewPassword, setConfirmNewPassword] = useState("");
 
     useEffect(() => {
         checkBiometrics();
@@ -35,12 +43,7 @@ export function UnlockScreen() {
     async function checkBiometrics() {
         const available = await isBiometricsAvailable();
         const cachedDek = await getSessionDek();
-        const canUse = available && cachedDek !== null;
-        setHasBiometrics(canUse);
-
-        if (canUse) {
-            handleBiometricUnlock();
-        }
+        setHasBiometrics(available && cachedDek !== null);
     }
 
     async function handleBiometricUnlock() {
@@ -60,37 +63,155 @@ export function UnlockScreen() {
     function handleUnlock() {
         setErrorMessage("");
 
-        if (useRecovery && !mnemonic.trim()) {
-            setErrorMessage("Please enter your 12-word recovery phrase.");
+        if (useRecovery) {
+            if (!mnemonic.trim()) {
+                setErrorMessage("Please enter your 12-word recovery phrase.");
+                return;
+            }
+
+            setIsLoading(true);
+
+            setTimeout(async () => {
+                try {
+                    // 1. Verify 12 words can decrypt the vault
+                    const ok = await prepareRecoveryWithMnemonic(mnemonic);
+                    if (!ok) {
+                        setErrorMessage("Invalid 12-word recovery phrase.");
+                        setIsLoading(false);
+                        return;
+                    }
+
+                    // 2. Dual-factor verification: require device fingerprint or PIN
+                    const biometricOk = await authenticateWithBiometrics(
+                        "Confirm fingerprint or PIN to authorize vault recovery",
+                    );
+
+                    if (!biometricOk) {
+                        abortRecovery();
+                        setErrorMessage(
+                            "Biometric confirmation required to authorize recovery.",
+                        );
+                        setIsLoading(false);
+                        return;
+                    }
+
+                    // 3. Both factors passed: transition to setting a new Master Password
+                    setIsResettingPassword(true);
+                    setIsLoading(false);
+                } catch (err: any) {
+                    abortRecovery();
+                    setErrorMessage(
+                        err?.message || "Failed to verify recovery phrase.",
+                    );
+                    setIsLoading(false);
+                }
+            }, 20);
+        } else {
+            if (!password.trim()) {
+                setErrorMessage("Please enter your Master Password.");
+                return;
+            }
+
+            setIsLoading(true);
+
+            setTimeout(async () => {
+                try {
+                    const ok = await unlockWithPassword(password);
+                    if (!ok) {
+                        setErrorMessage("Incorrect Master Password.");
+                    }
+                } catch (err: any) {
+                    setErrorMessage(err?.message || "Failed to unlock vault.");
+                } finally {
+                    setIsLoading(false);
+                }
+            }, 20);
+        }
+    }
+
+    async function handleSaveNewPassword() {
+        setErrorMessage("");
+
+        if (newPassword.length < 8) {
+            setErrorMessage(
+                "New Master Password must be at least 8 characters.",
+            );
             return;
         }
 
-        if (!useRecovery && !password.trim()) {
-            setErrorMessage("Please enter your Master Password.");
+        if (newPassword !== confirmNewPassword) {
+            setErrorMessage("Passwords do not match.");
             return;
         }
 
         setIsLoading(true);
 
-        setTimeout(async () => {
-            try {
-                if (useRecovery) {
-                    const ok = await unlockWithMnemonicPhrase(mnemonic);
-                    if (!ok) {
-                        setErrorMessage("Invalid 12-word mnemonic phrase.");
-                    }
-                } else {
-                    const ok = await unlockWithPassword(password);
-                    if (!ok) {
-                        setErrorMessage("Incorrect Master Password.");
-                    }
-                }
-            } catch (err: any) {
-                setErrorMessage(err?.message || "Failed to unlock vault.");
-            } finally {
-                setIsLoading(false);
-            }
-        }, 50);
+        try {
+            await resetMasterPassword(newPassword);
+            // Automatically unlocks to Dashboard
+        } catch (err: any) {
+            setErrorMessage(err?.message || "Failed to save new password.");
+        } finally {
+            setIsLoading(false);
+        }
+    }
+
+    // Render New Master Password setup view after recovery + biometric verification
+    if (isResettingPassword) {
+        return (
+            <View style={styles.container}>
+                <Text style={styles.title}>Reset Password</Text>
+                <Text style={styles.subtitle}>
+                    Recovery authorized. Set a new Master Password for your
+                    vault.
+                </Text>
+
+                {errorMessage ? (
+                    <Text style={styles.errorBanner}>{errorMessage}</Text>
+                ) : null}
+
+                <TextInput
+                    style={styles.input}
+                    placeholder="New Master Password (min 8 chars)"
+                    placeholderTextColor={colors.textMuted}
+                    secureTextEntry
+                    value={newPassword}
+                    onChangeText={(text) => {
+                        setNewPassword(text);
+                        if (errorMessage) setErrorMessage("");
+                    }}
+                />
+
+                <TextInput
+                    style={styles.input}
+                    placeholder="Confirm New Master Password"
+                    placeholderTextColor={colors.textMuted}
+                    secureTextEntry
+                    value={confirmNewPassword}
+                    onChangeText={(text) => {
+                        setConfirmNewPassword(text);
+                        if (errorMessage) setErrorMessage("");
+                    }}
+                />
+
+                <TouchableOpacity
+                    style={[
+                        styles.primaryButton,
+                        isLoading && styles.buttonDisabled,
+                    ]}
+                    onPress={handleSaveNewPassword}
+                    disabled={isLoading}
+                >
+                    {isLoading ? (
+                        <ActivityIndicator color={colors.background} />
+                    ) : (
+                        <Text style={styles.buttonText}>
+                            Set New Master Password
+                        </Text>
+                    )}
+                </TouchableOpacity>
+            </View>
+        );
     }
 
     return (
@@ -145,7 +266,7 @@ export function UnlockScreen() {
                     <ActivityIndicator color={colors.background} />
                 ) : (
                     <Text style={styles.buttonText}>
-                        {useRecovery ? "Recover Vault" : "Unlock"}
+                        {useRecovery ? "Verify Phrase" : "Unlock"}
                     </Text>
                 )}
             </TouchableOpacity>
@@ -196,7 +317,7 @@ const styles = StyleSheet.create({
     subtitle: {
         fontSize: 15,
         color: colors.textSecondary,
-        marginBottom: 24,
+        marginBottom: 28,
         lineHeight: 22,
     },
     errorBanner: {

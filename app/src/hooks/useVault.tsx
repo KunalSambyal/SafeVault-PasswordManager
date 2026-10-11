@@ -18,6 +18,10 @@ import {
     storeSessionDek,
     getSessionDek,
     clearSessionDek,
+    generateSalt,
+    deriveKeyFromPassword,
+    encryptAESGCM,
+    bytesToHex,
 } from "../crypto";
 import { IdentitySummary } from "../types/database";
 
@@ -29,6 +33,9 @@ interface VaultContextType {
     identities: IdentitySummary[];
     unlockWithPassword: (password: string) => Promise<boolean>;
     unlockWithMnemonicPhrase: (mnemonic: string) => Promise<boolean>;
+    prepareRecoveryWithMnemonic: (mnemonic: string) => Promise<boolean>;
+    abortRecovery: () => void;
+    resetMasterPassword: (newPassword: string) => Promise<void>;
     unlockWithBiometricSession: () => Promise<boolean>;
     setupNewVault: (masterPassword: string) => Promise<string>;
     completeOnboarding: () => Promise<void>;
@@ -118,7 +125,10 @@ export function VaultProvider({ children }: { children: ReactNode }) {
                 tag: meta.dek_tag,
             });
 
-            await storeSessionDek(unlockedDek);
+            storeSessionDek(unlockedDek).catch((err) =>
+                console.warn("Background keystore cache error", err),
+            );
+
             setDek(unlockedDek);
             setIsUnlocked(true);
             await loadIdentities();
@@ -128,6 +138,7 @@ export function VaultProvider({ children }: { children: ReactNode }) {
         }
     }
 
+    // Direct recovery that unlocks to dashboard
     async function unlockWithMnemonicPhrase(
         mnemonic: string,
     ): Promise<boolean> {
@@ -141,7 +152,10 @@ export function VaultProvider({ children }: { children: ReactNode }) {
                 tag: meta.recovery_tag,
             });
 
-            await storeSessionDek(unlockedDek);
+            storeSessionDek(unlockedDek).catch((err) =>
+                console.warn("Background keystore cache error", err),
+            );
+
             setDek(unlockedDek);
             setIsUnlocked(true);
             await loadIdentities();
@@ -149,6 +163,62 @@ export function VaultProvider({ children }: { children: ReactNode }) {
         } catch {
             return false;
         }
+    }
+
+    // Prepares recovery without unlocking UI, holding DEK in memory for password reset
+    async function prepareRecoveryWithMnemonic(
+        mnemonic: string,
+    ): Promise<boolean> {
+        const meta = await getVaultMetadata();
+        if (!meta) return false;
+
+        try {
+            const unlockedDek = unlockDekWithMnemonic(mnemonic, {
+                ciphertext: meta.recovery_encrypted_dek,
+                iv: meta.recovery_iv,
+                tag: meta.recovery_tag,
+            });
+
+            setDek(unlockedDek);
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    function abortRecovery(): void {
+        setDek(null);
+    }
+
+    // Re-encrypts DEK with new Master Password KEK and completes unlock
+    async function resetMasterPassword(newPassword: string): Promise<void> {
+        if (!dek) throw new Error("Vault is not unlocked");
+
+        const salt = generateSalt(32);
+        const newKek = deriveKeyFromPassword(newPassword, salt);
+        const encryptedDek = encryptAESGCM(bytesToHex(dek), newKek);
+
+        const meta = await getVaultMetadata();
+        if (!meta) throw new Error("Metadata missing");
+
+        await initializeVaultMetadata({
+            salt,
+            encrypted_dek: encryptedDek.ciphertext,
+            dek_iv: encryptedDek.iv,
+            dek_tag: encryptedDek.tag,
+            recovery_encrypted_dek: meta.recovery_encrypted_dek,
+            recovery_iv: meta.recovery_iv,
+            recovery_tag: meta.recovery_tag,
+            is_biometric_enabled: 1,
+            created_at: meta.created_at,
+        });
+
+        storeSessionDek(dek).catch((err) =>
+            console.warn("Background keystore update error", err),
+        );
+
+        setIsUnlocked(true);
+        await loadIdentities();
     }
 
     async function lockVault(clearBiometrics = false): Promise<void> {
@@ -169,6 +239,9 @@ export function VaultProvider({ children }: { children: ReactNode }) {
                 identities,
                 unlockWithPassword,
                 unlockWithMnemonicPhrase,
+                prepareRecoveryWithMnemonic,
+                abortRecovery,
+                resetMasterPassword,
                 unlockWithBiometricSession,
                 setupNewVault,
                 completeOnboarding,
