@@ -6,12 +6,14 @@ import {
     FlatList,
     TouchableOpacity,
     StyleSheet,
+    Alert,
 } from "react-native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useVault } from "../hooks/useVault";
 import { colors } from "../theme/colors";
 import { RootStackParamList } from "../types/navigation";
 import { IdentitySummary } from "../types/database";
+import { SidebarDrawer } from "../components/SidebarDrawer";
 
 type NavigationProp = NativeStackNavigationProp<
     RootStackParamList,
@@ -25,6 +27,7 @@ export function DashboardScreen({
 }) {
     const { identities, lockVault } = useVault();
     const [search, setSearch] = useState("");
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     const filtered = identities.filter((item) =>
         item.identity.toLowerCase().includes(search.toLowerCase()),
@@ -64,11 +67,23 @@ export function DashboardScreen({
                     >
                         <Text style={styles.addButtonText}>+ Add</Text>
                     </TouchableOpacity>
+
                     <TouchableOpacity
                         style={styles.lockButton}
                         onPress={() => lockVault()}
                     >
                         <Text style={styles.lockButtonText}>Lock</Text>
+                    </TouchableOpacity>
+
+                    {/* Hamburger 3-line Menu Button */}
+                    <TouchableOpacity
+                        style={styles.menuButton}
+                        onPress={() => setIsSidebarOpen(true)}
+                        accessibilityLabel="Open menu"
+                    >
+                        <View style={styles.hamburgerBar} />
+                        <View style={styles.hamburgerBar} />
+                        <View style={styles.hamburgerBar} />
                     </TouchableOpacity>
                 </View>
             </View>
@@ -97,6 +112,24 @@ export function DashboardScreen({
                     </View>
                 }
             />
+
+            {/* Sidebar Drawer Component */}
+            <SidebarDrawer
+                visible={isSidebarOpen}
+                onClose={() => setIsSidebarOpen(false)}
+                onExportPress={() => {
+                    Alert.alert(
+                        "Export Vault",
+                        "Ready for Phase 6 Export implementation.",
+                    );
+                }}
+                onImportPress={() => {
+                    Alert.alert(
+                        "Import Vault",
+                        "Ready for Phase 6 Import implementation.",
+                    );
+                }}
+            />
         </View>
     );
 }
@@ -121,6 +154,7 @@ const styles = StyleSheet.create({
     },
     headerButtons: {
         flexDirection: "row",
+        alignItems: "center",
         gap: 8,
     },
     addButton: {
@@ -146,35 +180,53 @@ const styles = StyleSheet.create({
         color: colors.textSecondary,
         fontSize: 14,
     },
-    searchBar: {
-        backgroundColor: colors.inputBackground,
+    menuButton: {
+        backgroundColor: colors.cardBackground,
         borderWidth: 1,
         borderColor: colors.surfaceBorder,
+        paddingHorizontal: 10,
+        paddingVertical: 10,
+        borderRadius: 6,
+        justifyContent: "center",
+        alignItems: "center",
+        gap: 3,
+    },
+    hamburgerBar: {
+        width: 16,
+        height: 2,
+        backgroundColor: colors.textPrimary,
+        borderRadius: 1,
+    },
+    searchBar: {
+        backgroundColor: colors.inputBackground,
+        borderColor: colors.surfaceBorder,
+        borderWidth: 1,
         borderRadius: 8,
+        paddingHorizontal: 14,
+        paddingVertical: 10,
         color: colors.textPrimary,
-        padding: 12,
-        marginBottom: 16,
         fontSize: 15,
+        marginBottom: 16,
     },
     listContent: {
         paddingBottom: 24,
     },
     card: {
         backgroundColor: colors.cardBackground,
-        borderWidth: 1,
         borderColor: colors.surfaceBorder,
+        borderWidth: 1,
         borderRadius: 8,
         padding: 16,
         flexDirection: "row",
-        alignItems: "center",
         justifyContent: "space-between",
+        alignItems: "center",
         marginBottom: 10,
     },
     cardLeft: {
         flex: 1,
     },
     identityText: {
-        fontSize: 16,
+        fontSize: 17,
         fontWeight: "600",
         color: colors.textPrimary,
     },
@@ -184,14 +236,16 @@ const styles = StyleSheet.create({
         gap: 12,
     },
     badge: {
-        backgroundColor: colors.surfaceBorder,
-        paddingHorizontal: 10,
-        paddingVertical: 4,
+        backgroundColor: colors.inputBackground,
+        paddingHorizontal: 8,
+        paddingVertical: 2,
         borderRadius: 12,
+        borderWidth: 1,
+        borderColor: colors.surfaceBorder,
     },
     badgeText: {
-        color: colors.textSecondary,
-        fontSize: 12,
+        color: colors.accent,
+        fontSize: 13,
         fontWeight: "700",
     },
     chevron: {
@@ -201,16 +255,17 @@ const styles = StyleSheet.create({
     },
     emptyContainer: {
         alignItems: "center",
-        marginTop: 64,
+        justifyContent: "center",
+        marginTop: 60,
     },
     emptyText: {
-        color: colors.textSecondary,
-        fontSize: 16,
+        fontSize: 18,
         fontWeight: "600",
+        color: colors.textSecondary,
         marginBottom: 6,
     },
     emptySubText: {
-        color: colors.textMuted,
         fontSize: 14,
+        color: colors.textMuted,
     },
 });
