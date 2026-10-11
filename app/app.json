@@ -1,0 +1,36 @@
+{
+    "expo": {
+        "name": "SafeVault",
+        "slug": "safevault",
+        "version": "1.0.0",
+        "orientation": "portrait",
+        "icon": "./assets/icon.png",
+        "userInterfaceStyle": "dark",
+        "ios": {
+            "supportsTablet": true
+        },
+        "android": {
+            "package": "com.safevault.app",
+            "adaptiveIcon": {
+                "backgroundColor": "#000000",
+                "foregroundImage": "./assets/android-icon-foreground.png",
+                "backgroundImage": "./assets/android-icon-background.png",
+                "monochromeImage": "./assets/android-icon-monochrome.png"
+            },
+            "predictiveBackGestureEnabled": false,
+            "permissions": [],
+            "blockedPermissions": [
+                "android.permission.INTERNET",
+                "android.permission.ACCESS_NETWORK_STATE"
+            ]
+        },
+        "web": {
+            "favicon": "./assets/favicon.png"
+        },
+        "plugins": [
+            "expo-secure-store",
+            "expo-sqlite",
+            "./plugins/withFlagSecure.js"
+        ]
+    }
+}
