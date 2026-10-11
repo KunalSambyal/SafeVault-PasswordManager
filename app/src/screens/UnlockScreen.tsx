@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
     View,
     Text,
@@ -8,15 +8,54 @@ import {
     ActivityIndicator,
 } from "react-native";
 import { useVault } from "../hooks/useVault";
+import {
+    authenticateWithBiometrics,
+    isBiometricsAvailable,
+} from "../utils/biometrics";
+import { getSessionDek } from "../crypto";
 import { colors } from "../theme/colors";
 
 export function UnlockScreen() {
-    const { unlockWithPassword, unlockWithMnemonicPhrase } = useVault();
+    const {
+        unlockWithPassword,
+        unlockWithMnemonicPhrase,
+        unlockWithBiometricSession,
+    } = useVault();
     const [password, setPassword] = useState("");
     const [useRecovery, setUseRecovery] = useState(false);
     const [mnemonic, setMnemonic] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
+    const [hasBiometrics, setHasBiometrics] = useState(false);
+
+    useEffect(() => {
+        checkBiometrics();
+    }, []);
+
+    async function checkBiometrics() {
+        const available = await isBiometricsAvailable();
+        const cachedDek = await getSessionDek();
+        const canUse = available && cachedDek !== null;
+        setHasBiometrics(canUse);
+
+        if (canUse) {
+            handleBiometricUnlock();
+        }
+    }
+
+    async function handleBiometricUnlock() {
+        setIsLoading(true);
+        setErrorMessage("");
+        const success = await authenticateWithBiometrics("Unlock SafeVault");
+        if (success) {
+            const ok = await unlockWithBiometricSession();
+            if (ok) {
+                setIsLoading(false);
+                return;
+            }
+        }
+        setIsLoading(false);
+    }
 
     function handleUnlock() {
         setErrorMessage("");
@@ -111,6 +150,18 @@ export function UnlockScreen() {
                 )}
             </TouchableOpacity>
 
+            {hasBiometrics && !useRecovery ? (
+                <TouchableOpacity
+                    style={styles.biometricButton}
+                    onPress={handleBiometricUnlock}
+                    disabled={isLoading}
+                >
+                    <Text style={styles.biometricButtonText}>
+                        Unlock with Fingerprint / PIN
+                    </Text>
+                </TouchableOpacity>
+            ) : null}
+
             <TouchableOpacity
                 style={styles.switchButton}
                 onPress={() => {
@@ -179,6 +230,20 @@ const styles = StyleSheet.create({
         marginTop: 8,
         minHeight: 52,
         justifyContent: "center",
+    },
+    biometricButton: {
+        backgroundColor: colors.cardBackground,
+        borderWidth: 1,
+        borderColor: colors.primary,
+        padding: 14,
+        borderRadius: 8,
+        alignItems: "center",
+        marginTop: 12,
+    },
+    biometricButtonText: {
+        color: colors.primary,
+        fontWeight: "700",
+        fontSize: 15,
     },
     buttonDisabled: {
         opacity: 0.5,

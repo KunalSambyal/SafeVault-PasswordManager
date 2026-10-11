@@ -1,5 +1,10 @@
-import React from "react";
-import { View, ActivityIndicator } from "react-native";
+import React, { useEffect, useRef } from "react";
+import {
+    View,
+    ActivityIndicator,
+    AppState,
+    AppStateStatus,
+} from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { StatusBar } from "expo-status-bar";
@@ -15,7 +20,29 @@ import { colors } from "./src/theme/colors";
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 function AppNavigator() {
-    const { isReady, isInitialized, isUnlocked } = useVault();
+    const { isReady, isInitialized, isUnlocked, lockVault } = useVault();
+    const appState = useRef(AppState.currentState);
+
+    useEffect(() => {
+        const subscription = AppState.addEventListener(
+            "change",
+            (nextAppState: AppStateStatus) => {
+                if (
+                    appState.current === "active" &&
+                    nextAppState.match(/inactive|background/)
+                ) {
+                    if (isUnlocked) {
+                        lockVault();
+                    }
+                }
+                appState.current = nextAppState;
+            },
+        );
+
+        return () => {
+            subscription.remove();
+        };
+    }, [isUnlocked, lockVault]);
 
     if (!isReady) {
         return (

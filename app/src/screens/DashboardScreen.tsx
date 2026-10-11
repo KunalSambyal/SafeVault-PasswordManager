@@ -66,7 +66,7 @@ export function DashboardScreen({
                     </TouchableOpacity>
                     <TouchableOpacity
                         style={styles.lockButton}
-                        onPress={lockVault}
+                        onPress={() => lockVault()}
                     >
                         <Text style={styles.lockButtonText}>Lock</Text>
                     </TouchableOpacity>

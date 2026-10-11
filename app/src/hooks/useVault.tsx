@@ -29,9 +29,10 @@ interface VaultContextType {
     identities: IdentitySummary[];
     unlockWithPassword: (password: string) => Promise<boolean>;
     unlockWithMnemonicPhrase: (mnemonic: string) => Promise<boolean>;
+    unlockWithBiometricSession: () => Promise<boolean>;
     setupNewVault: (masterPassword: string) => Promise<string>;
     completeOnboarding: () => Promise<void>;
-    lockVault: () => Promise<void>;
+    lockVault: (clearBiometrics?: boolean) => Promise<void>;
     refreshIdentities: () => Promise<void>;
 }
 
@@ -52,15 +53,6 @@ export function VaultProvider({ children }: { children: ReactNode }) {
         try {
             const initialized = await isVaultInitialized();
             setIsInitialized(initialized);
-
-            if (initialized) {
-                const cachedDek = await getSessionDek();
-                if (cachedDek) {
-                    setDek(cachedDek);
-                    setIsUnlocked(true);
-                    await loadIdentities();
-                }
-            }
         } catch (err) {
             console.error("Failed to initialize vault state", err);
         } finally {
@@ -103,6 +95,16 @@ export function VaultProvider({ children }: { children: ReactNode }) {
         setIsInitialized(true);
         setIsUnlocked(true);
         await loadIdentities();
+    }
+
+    async function unlockWithBiometricSession(): Promise<boolean> {
+        const cachedDek = await getSessionDek();
+        if (!cachedDek) return false;
+
+        setDek(cachedDek);
+        setIsUnlocked(true);
+        await loadIdentities();
+        return true;
     }
 
     async function unlockWithPassword(password: string): Promise<boolean> {
@@ -149,8 +151,10 @@ export function VaultProvider({ children }: { children: ReactNode }) {
         }
     }
 
-    async function lockVault(): Promise<void> {
-        await clearSessionDek();
+    async function lockVault(clearBiometrics = false): Promise<void> {
+        if (clearBiometrics) {
+            await clearSessionDek();
+        }
         setDek(null);
         setIsUnlocked(false);
     }
@@ -165,6 +169,7 @@ export function VaultProvider({ children }: { children: ReactNode }) {
                 identities,
                 unlockWithPassword,
                 unlockWithMnemonicPhrase,
+                unlockWithBiometricSession,
                 setupNewVault,
                 completeOnboarding,
                 lockVault,

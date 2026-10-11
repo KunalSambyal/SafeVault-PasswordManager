@@ -12,6 +12,8 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useVault } from "../hooks/useVault";
 import { getCredentialsByIdentity, deleteCredential } from "../db";
 import { decryptAESGCM } from "../crypto";
+import { authenticateWithBiometrics } from "../utils/biometrics";
+import { copySecureString } from "../utils/clipboard";
 import { CredentialRecord } from "../types/database";
 import { RootStackParamList } from "../types/navigation";
 import { colors } from "../theme/colors";
@@ -72,7 +74,7 @@ export function LabelVaultScreen({
         setItems(records);
     }
 
-    function handleViewPassword(item: CredentialRecord) {
+    async function handleViewPassword(item: CredentialRecord) {
         if (!dek) return;
 
         if (revealedPasswords[item.id]) {
@@ -88,6 +90,11 @@ export function LabelVaultScreen({
             });
             return;
         }
+
+        const verified = await authenticateWithBiometrics(
+            `Verify identity to view ${item.label}`,
+        );
+        if (!verified) return;
 
         try {
             const plaintext = decryptAESGCM(
@@ -109,7 +116,53 @@ export function LabelVaultScreen({
         }
     }
 
-    function handleDelete(id: number, label: string) {
+    async function handleCopyPassword(item: CredentialRecord) {
+        if (!dek) return;
+
+        const verified = await authenticateWithBiometrics(
+            `Verify identity to copy ${item.label}`,
+        );
+        if (!verified) return;
+
+        try {
+            const plaintext = decryptAESGCM(
+                {
+                    ciphertext: item.encrypted_password,
+                    iv: item.iv,
+                    tag: item.auth_tag,
+                },
+                dek,
+            );
+
+            await copySecureString(plaintext, 30);
+            Alert.alert(
+                "Copied",
+                "Password copied. Clipboard will clear automatically in 30 seconds.",
+            );
+        } catch {
+            Alert.alert("Error", "Failed to copy password.");
+        }
+    }
+
+    async function handleEdit(item: CredentialRecord) {
+        const verified = await authenticateWithBiometrics(
+            `Verify identity to edit ${item.label}`,
+        );
+        if (!verified) return;
+
+        navigation.navigate("AddEditModal", {
+            credentialId: item.id,
+            identity: item.identity,
+            initialLabel: item.label,
+        });
+    }
+
+    async function handleDelete(id: number, label: string) {
+        const verified = await authenticateWithBiometrics(
+            `Verify identity to delete ${label}`,
+        );
+        if (!verified) return;
+
         Alert.alert(
             "Confirm Deletion",
             `Permanently remove ${label}? This action cannot be undone.`,
@@ -161,13 +214,14 @@ export function LabelVaultScreen({
 
                     <TouchableOpacity
                         style={styles.actionButton}
-                        onPress={() =>
-                            navigation.navigate("AddEditModal", {
-                                credentialId: item.id,
-                                identity: item.identity,
-                                initialLabel: item.label,
-                            })
-                        }
+                        onPress={() => handleCopyPassword(item)}
+                    >
+                        <Text style={styles.actionText}>Copy</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={styles.actionButton}
+                        onPress={() => handleEdit(item)}
                     >
                         <Text style={styles.actionText}>Edit</Text>
                     </TouchableOpacity>
@@ -280,7 +334,7 @@ const styles = StyleSheet.create({
     cardActions: {
         flexDirection: "row",
         justifyContent: "space-between",
-        gap: 8,
+        gap: 6,
     },
     actionButton: {
         flex: 1,
@@ -294,7 +348,7 @@ const styles = StyleSheet.create({
     actionText: {
         color: colors.textPrimary,
         fontWeight: "600",
-        fontSize: 13,
+        fontSize: 12,
     },
     deleteButton: {
         borderColor: colors.dangerBackground,
