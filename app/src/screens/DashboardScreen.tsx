@@ -120,13 +120,13 @@ export function DashboardScreen({
                 onExportPress={() => {
                     Alert.alert(
                         "Export Vault",
-                        "Ready for Phase 6 Export implementation.",
+                        "This feature will be available in a future update."
                     );
                 }}
                 onImportPress={() => {
                     Alert.alert(
                         "Import Vault",
-                        "Ready for Phase 6 Import implementation.",
+                        "This feature will be available in a future update."
                     );
                 }}
             />

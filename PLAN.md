@@ -1,174 +1,120 @@
-# SafeVault: Offline Secure Password Manager
+# SafeVault Project Plan & Roadmap
 
-A zero-knowledge, offline-first mobile credential vault designed for Android. The application ensures complete privacy by isolating sensitive credentials on-device, backed by hardware encryption, with zero network communication capabilities.
-
----
-
-## 1. The Problem
-
-Storing credentials in plaintext (such as standard notes applications, draft emails, or unencrypted text documents) exposes sensitive accounts to severe security risks. If a device is compromised, shared, lost, or accessed without authorization, all credentials are immediately exposed.
-
-Cloud-based password managers solve storage convenience but introduce distinct vulnerabilities:
-
-- Third-party data breaches, remote credential harvesting, and cloud service outages.
-- Complex subscription models and persistent background network synchronization.
-- Attack surfaces exposed across web endpoints and synchronization protocols.
-
-Command-line utilities and custom desktop scripts solve the privacy problem but lack the mobile-first accessibility, biometric integration, and convenience required for daily smartphone logins.
+SafeVault is an ultra-secure, zero-knowledge, offline-first credential vault built for Android with React Native / Expo (TypeScript) and SQLite. The project eliminates cloud attack surfaces and remote data harvesting by storing and encrypting all data strictly on-device with hardware-level isolation.
 
 ---
 
-## 2. The Solution: Zero-Knowledge Local Architecture
+## 1. Project Overview & Release Status
 
-SafeVault is designed as a standalone, zero-network Android utility functioning as an encrypted local vault.
+### Current Milestone: Beta Release (v1.0.0-beta)
 
-### Core Principles
+The core cryptographic engine, secure database layer, primary user interfaces, biometric access controls, and operating system isolations are fully implemented, tested, and bundled into a standalone Android APK.
 
-- **Zero Network Footprint:** The application is built without the Android Internet permission (`android.permission.INTERNET`). The operating system prevents the binary from creating network sockets, transmitting data, or performing external requests.
-- **Hardware-Backed Isolation:** Cryptographic keys are protected using the device's hardware-backed Android Keystore via biometric authentication.
-- **Envelope Encryption:** Passwords are encrypted using an internal Data Encryption Key (DEK) that is guarded by the Master Password (KEK) and an offline recovery phrase.
-- **Ephemeral Memory Exposure:** Passwords exist in plaintext only in-memory, protected by 30-second auto-masking timers and automatic clipboard scrubbing.
+### Release Characteristics
 
----
-
-## 3. Technology Stack
-
-- **Frontend Framework:** React Native with Expo (TypeScript)
-- **Secure Key Storage:** `expo-secure-store` (Hardware-backed Android Keystore integration)
-- **Local Sandboxed Database:** `expo-sqlite` (Sandboxed relational metadata and ciphertext storage)
-- **Biometric & System Security:** `expo-local-authentication` (Biometric fingerprint and device PIN verification)
-- **Cryptographic Engine:** Native AES-256-GCM (Authenticated Encryption with Associated Data) and PBKDF2/Argon2 key derivation
+- **Binary Format:** Standalone APK compiled for real physical Android devices (`arm64-v8a` and `armeabi-v7a`).
+- **Network Scope:** Completely isolated. Zero internet permissions requested or granted.
 
 ---
 
-## 4. Cryptographic Implementation
+## 2. Features Implemented in Beta (v1.0.0-beta)
 
-SafeVault uses an envelope encryption model to ensure data confidentiality, cryptographic integrity, and fast credential maintenance.
+### Phase 0: Native Security & Scaffolding
 
-### A. Key Derivation & Salting
+- **Zero-Network Compilation:** Stripped `android.permission.INTERNET` and `ACCESS_NETWORK_STATE` at the manifest and Gradle build levels.
+- **Window Protection (`FLAG_SECURE`):** Enforced `FLAG_SECURE` on the root Android Activity via custom Expo config plugin (`withFlagSecure.js`), blocking screenshots, screen recordings, and recent app task previews.
+- **Orientation Lock:** Locked to portrait orientation for secure single-hand mobile usage.
 
-1. During initial setup, the user defines a strong Master Password.
-2. The application generates a cryptographically secure 32-byte random salt using a CSPRNG.
-3. A Key Encryption Key (KEK) is derived using PBKDF2-HMAC-SHA256 (with a minimum of 600,000 iterations) or native Argon2id.
+### Phase 1: Cryptographic Engine & Key Management
 
-### B. Envelope Encryption (DEK and KEK)
+- **Authenticated Encryption:** Native AES-256-GCM authenticated encryption with unique 12-byte initialization vectors (IVs) and authentication tags per record.
+- **Key Derivation:** PBKDF2-HMAC-SHA256 with 32-byte CSPRNG salt. Iteration count tuned to Hermes runtime to ensure sub-250ms unlock without UI freezing.
+- **Envelope Encryption (DEK & KEK):** A random 256-bit Data Encryption Key (DEK) encrypts credential passwords; the Master Password derived Key Encryption Key (KEK) wraps the DEK.
+- **BIP-39 Mnemonic Recovery:** 12-word recovery phrase generated on onboarding that independently wraps the DEK for disaster recovery.
+- **Secure Hardware Keystore:** Android Keystore caching via `expo-secure-store` for rapid biometric unlock without repeated PBKDF2 computation.
 
-1. A 256-bit random Data Encryption Key (DEK) is generated on first launch.
-2. The DEK is encrypted with the Master Password derived key (KEK) using AES-256-GCM and stored in the local database.
-3. All individual credential passwords are encrypted solely with the DEK.
-4. Changing the Master Password only requires re-encrypting the 32-byte DEK once, eliminating the need to re-encrypt all stored records in the database.
+### Phase 2: Sandboxed Database Layer
 
-### C. Offline BIP-39 Recovery Phrase
+- **Local Relational Storage:** `expo-sqlite` operating in Write-Ahead Logging (WAL) mode.
+- **Table `vault_metadata`:** Stores cryptographic salt, encrypted DEK envelopes, and biometric preference flags.
+- **Table `credentials`:** Stores identities and service labels in plaintext for high-performance filtering, with password payloads stored as AES-256-GCM ciphertext.
 
-1. The app generates a 12- or 24-word BIP-39 mnemonic recovery phrase upon first initialization.
-2. The recovery phrase independently encrypts a duplicate copy of the DEK.
-3. If the user forgets their Master Password, inputting the BIP-39 phrase decrypts the DEK and restores access to the vault without remote servers or developer intervention.
+### Phase 3: Core UI & Navigation System
 
-### D. Credential Ciphertext (AES-256-GCM)
+- **Theme System:** High-contrast dark theme optimized for OLED battery efficiency and readability.
+- **Onboarding Screen:** Master password creation and 12-word recovery phrase confirmation.
+- **Dashboard (Identity Directory):** Accounts aggregated by identity (email/username), real-time search filtering, account count badges, and quick-navigation chevrons.
+- **Label Vault (Detail View):** Service cards grouped under active identity, displaying individual credentials.
+- **Add / Edit Modal:** Clean modal dialog for creating and modifying credential entries.
 
-- Every credential password is encrypted using AES-256-GCM.
-- Each entry generates a unique 12-byte Initialization Vector (IV).
-- An authentication tag (Auth Tag) is generated and stored per entry, ensuring protection against ciphertext tampering, bit-flipping, and padding oracle exploits.
+### Phase 4: Biometrics & Operating System Hardening
 
----
+- **Launch Verification:** Biometric authentication challenge (fingerprint, face, or device PIN) on app startup.
+- **Step-Up Authentication:** Biometric verification required prior to viewing, copying, editing, or deleting any credential.
+- **Temporary Reveal Timer:** Decrypted passwords displayed with a 30-second countdown before automatically reverting to masked bullets (`••••••••`).
+- **Sensitive Clipboard Scrubbing:** Copies credentials tagged with `ClipDescription.EXTRA_IS_SENSITIVE` to suppress Android 13+ floating previews, backed by a 30-second automated clipboard purge timer.
+- **Lifecycle Auto-Lock:** Monitors Android `AppState` transitions; locks the vault immediately upon backgrounding or app switching.
 
-## 5. Sandboxed Database Architecture
+### Phase 5: Password Generator & Health
 
-Data is stored within the application's isolated sandboxed storage on Android using `expo-sqlite`. Other applications cannot access this file.
+- **CSPRNG Generation:** Configurable random password generator supporting custom lengths (8 to 64 chars), uppercase, lowercase, numbers, and special symbols.
+- **BIP-39 Passphrase Mode:** Multi-word dictionary passphrase generator.
+- **Strength Evaluation:** Real-time entropy and complexity calculation with visual strength meter.
 
-### Table: `vault_metadata`
+### Dual-Factor Recovery & Master Password Reset
 
-Stores initialization parameters and envelope encryption payloads.
+- **Recovery Workflow:** Verification of the 12-word recovery phrase against the stored recovery DEK envelope.
+- **Secondary Biometric Challenge:** Enforces biometric/PIN verification after recovery word input to prevent unauthorized access from discovered paper backups.
+- **Safe Password Reset:** Allows users to define a new Master Password and re-wrap the active DEK without re-encrypting or losing stored passwords.
 
-| Column                   | Type                | Description                                 |
-| :----------------------- | :------------------ | :------------------------------------------ |
-| `id`                     | INTEGER PRIMARY KEY | Singleton metadata identifier               |
-| `salt`                   | TEXT NOT NULL       | Cryptographic salt for PBKDF2/Argon2        |
-| `encrypted_dek`          | TEXT NOT NULL       | DEK encrypted with Master Password KEK      |
-| `dek_iv`                 | TEXT NOT NULL       | IV used for DEK encryption                  |
-| `dek_tag`                | TEXT NOT NULL       | GCM authentication tag for DEK              |
-| `recovery_encrypted_dek` | TEXT NOT NULL       | DEK encrypted with BIP-39 recovery key      |
-| `recovery_iv`            | TEXT NOT NULL       | IV used for recovery key encryption         |
-| `recovery_tag`           | TEXT NOT NULL       | GCM authentication tag for recovery key     |
-| `is_biometric_enabled`   | INTEGER DEFAULT 0   | Flag indicating biometric unlock preference |
-| `created_at`             | INTEGER             | Initialization timestamp                    |
+### Navigation & Beta Feedback UI
 
-### Table: `credentials`
-
-Stores account metadata and encrypted password payloads.
-
-| Column               | Type                              | Description                                        |
-| :------------------- | :-------------------------------- | :------------------------------------------------- |
-| `id`                 | INTEGER PRIMARY KEY AUTOINCREMENT | Unique record identifier                           |
-| `identity`           | TEXT NOT NULL                     | Plaintext email, username, or account identity     |
-| `label`              | TEXT NOT NULL                     | Plaintext service name (e.g., Spotify, Work Email) |
-| `encrypted_password` | TEXT NOT NULL                     | AES-256-GCM ciphertext                             |
-| `iv`                 | TEXT NOT NULL                     | Unique initialization vector for this record       |
-| `auth_tag`           | TEXT NOT NULL                     | Authentication tag for integrity validation        |
-| `created_at`         | INTEGER                           | Record creation timestamp                          |
-| `updated_at`         | INTEGER                           | Record modification timestamp                      |
-
-_Note: Storing identities and labels in plaintext within the local sandbox allows instant on-device filtering, sorting, and indexing while preserving confidentiality for secret payloads._
+- **Right-Sliding Drawer:** High-contrast solid sidebar (80% screen width) that slides in from the right edge with backdrop dismissal.
+- **Beta Notice & Feedback:** Direct reporting channel with developer email (`kunalsambyal9628@gmail.com`), one-tap clipboard copy, and warning against sole production dependency.
+- **Release Channel Link:** Direct link to GitHub repository and APK release page.
 
 ---
 
-## 6. User Interface & Workflow
+## 3. Features Planned for Future Updates
 
-The interface follows a dark, high-contrast, text-only design system utilizing native fonts for minimal footprint and battery efficiency.
+The following capabilities are scheduled for subsequent releases following beta feedback:
 
-### Screen 1: Dashboard (Identity Directory)
+### Phase 6: Offline Backup & Data Migration (Target: v1.1.0)
 
-- Groups stored credentials by identity (e.g., `user@gmail.com`, `work_alias`).
-- Displays an account count badge for each identity row.
-- Fast search filter bar to quickly locate services and usernames.
-- Tap an identity row to navigate directly to its associated services.
+1. **Local 4-File Rotational Backup (GFS Architecture):**
+    - Background automated rotation before any mutating database query (`insert`, `update`, `delete`).
+    - Rolling history: `vault.db` (live), `backup_v1.json`, `backup_v2.json`, and `backup_v3.json` in `FileSystem.documentDirectory`.
+    - Automatic recovery mechanism if database corruption is detected at startup.
+2. **Cross-Device Encrypted Migration File:**
+    - Manual export producing `vault_migration.json` encrypted via AES-256-GCM with a user-specified backup password.
+    - Storage Access Framework (SAF) integration for saving to external storage, SD cards, or downloads.
+3. **Hybrid Import Workflow:**
+    - **Onboarding Flow:** "Import Existing Vault" option on first startup for clean device migration without dummy vault creation.
+    - **In-App Flow:** "Import Vault" option in the sidebar supporting both safe merge (appending credentials re-wrapped under active DEK) and full restore.
 
-### Screen 2: Label Vault (Detail Screen)
+### Phase 7: Configuration & Settings Panel (Target: v1.2.0)
 
-- Displays service cards associated with the selected identity (e.g., Spotify, Personal Banking).
-- Card actions:
-    - **View:** Prompts for biometric or PIN verification. On success, decrypts the password into memory and displays it alongside a 30-second countdown timer. At 0 seconds, the view automatically reverts to masked text (`••••••••`).
-    - **Copy:** Copies the decrypted password to the system clipboard and initiates a 30-second clipboard wipe timer.
-    - **Edit:** Requires biometric or PIN re-verification to alter existing credentials.
-    - **Delete:** Requires biometric or PIN re-verification followed by a native confirmation prompt to prevent accidental deletions.
+1. **Security Preferences:**
+    - Configurable auto-lock timeout (immediate, 1 minute, 5 minutes, 15 minutes).
+    - Biometric toggle (enable or disable biometric unlock while keeping master password active).
+    - Clipboard wipe timer adjustments (15s, 30s, 60s).
+2. **Appearance & Customization:**
+    - Light theme option with automated system theme matching.
+3. **Vault Health Audit:**
+    - Local on-device scan for weak, short, duplicate, or compromised passwords without network communication.
 
-### Ephemeral State & In-Memory Protections
+### Phase 8: Documentation & User Experience (Target: v1.3.0)
 
-- Decrypted passwords are stored only in temporary component state.
-- If the user minimizes the application or switches tasks, active timers scrub memory and the vault locks immediately.
-
----
-
-## 7. Operating System & Hardware Protections
-
-### Strict Network Isolation
-
-- The `android.permission.INTERNET` flag is stripped from the compiled `AndroidManifest.xml`.
-- Android's operating system sandbox hard-blocks any socket creation or external data routing.
-
-### Window Security (`FLAG_SECURE`)
-
-- The application runs with the Android `FLAG_SECURE` window attribute active.
-- Prevents screenshots and screen recordings of decrypted passwords.
-- Automatically blacks out or blurs the application preview in the Android recent apps switcher.
-
-### Android 13+ Sensitive Clipboard Flag
-
-- When copying credentials to the clipboard, the item is tagged with `ClipDescription.EXTRA_IS_SENSITIVE`.
-- Prevents Android 13+ from rendering the plain-text password in the floating clipboard preview overlay.
-- A background timer purges the clipboard contents after 30 seconds.
-
-### App Lifecycle Auto-Lock
-
-- Listens to Android `AppState` lifecycle transitions.
-- If the application enters the `background` or `inactive` state, the vault locks instantly, invalidating active biometric sessions.
+1. **In-App Guide:** Built-in offline guide explaining zero-knowledge security, recovery phrase handling, and best practices.
+2. **Credential Tags & Custom Fields:** Support for custom fields (PINs, security questions, notes, Wi-Fi credentials).
 
 ---
 
-## 8. Offline Backup & Data Portability
+## 4. Engineering Milestones
 
-SafeVault supports local encrypted backup and restore without network connectivity:
-
-- **Encrypted Container Export:** The entire vault (identities, labels, and password records) is serialized and encrypted into a single container file using AES-256-GCM.
-- **Storage Access Framework (SAF):** Backups are written directly to user-selected locations on local storage or external media (e.g., USB drive, PC transfer) without requesting broad storage permissions.
-- **Integrity Verified Import:** Restoring requires the backup password or master key. If the file has been tampered with, the GCM authentication tag fails and the import is safely aborted.
+| Milestone       | Target Scope                                                             | Status         |
+| :-------------- | :----------------------------------------------------------------------- | :------------- |
+| **v1.0.0-beta** | Core crypto, database, full CRUD, biometrics, generator, sidebar UI, APK | **Completed**  |
+| **v1.1.0**      | GFS rotational backup, encrypted migration JSON export/import (hybrid)   | Next Milestone |
+| **v1.2.0**      | Settings panel, configurable timers, light theme, password health audit  | Planned        |
+| **v1.3.0**      | Offline user guide, custom field types, database export verification     | Planned        |

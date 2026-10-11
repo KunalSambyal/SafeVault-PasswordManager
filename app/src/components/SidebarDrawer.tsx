@@ -19,6 +19,7 @@ const SIDEBAR_WIDTH = Math.min(SCREEN_WIDTH * 0.8, 340);
 
 const GITHUB_REPO_URL = "https://github.com/kunalsambyal/SafeVault";
 const RELEASES_URL = "https://github.com/kunalsambyal/SafeVault/releases";
+const FEEDBACK_EMAIL = "kunalsambyal9628@gmail.com";
 
 interface SidebarDrawerProps {
     visible: boolean;
@@ -86,6 +87,11 @@ export function SidebarDrawer({
         Alert.alert("Copied", "GitHub repository URL copied to clipboard.");
     };
 
+    const handleCopyEmail = async () => {
+        await Clipboard.setStringAsync(FEEDBACK_EMAIL);
+        Alert.alert("Copied", "Feedback email copied to clipboard: " + FEEDBACK_EMAIL);
+    };
+
     return (
         <Modal
             visible={visible}
@@ -144,9 +150,7 @@ export function SidebarDrawer({
                                             styles.themePillActive,
                                         ]}
                                     >
-                                        <Text
-                                            style={styles.themePillTextActive}
-                                        >
+                                        <Text style={styles.themePillTextActive}>
                                             Dark
                                         </Text>
                                     </View>
@@ -155,7 +159,7 @@ export function SidebarDrawer({
                                         onPress={() =>
                                             Alert.alert(
                                                 "Theme",
-                                                "Light theme toggle will be enabled in an upcoming update.",
+                                                "Light theme toggle will be enabled in a future update."
                                             )
                                         }
                                     >
@@ -180,9 +184,7 @@ export function SidebarDrawer({
                                     onExportPress();
                                 }}
                             >
-                                <Text style={styles.itemTitle}>
-                                    Export Vault
-                                </Text>
+                                <Text style={styles.itemTitle}>Export Vault</Text>
                                 <Text style={styles.itemSubtitle}>
                                     Create encrypted JSON backup for migration
                                 </Text>
@@ -195,9 +197,7 @@ export function SidebarDrawer({
                                     onImportPress();
                                 }}
                             >
-                                <Text style={styles.itemTitle}>
-                                    Import Vault
-                                </Text>
+                                <Text style={styles.itemTitle}>Import Vault</Text>
                                 <Text style={styles.itemSubtitle}>
                                     Restore or merge credentials from backup
                                 </Text>
@@ -219,7 +219,7 @@ export function SidebarDrawer({
                                     } else {
                                         Alert.alert(
                                             "Settings",
-                                            "Vault settings and auto-lock rules panel coming soon.",
+                                            "Vault settings and auto-lock rules panel coming in a future update."
                                         );
                                     }
                                 }}
@@ -244,14 +244,12 @@ export function SidebarDrawer({
                                     } else {
                                         Alert.alert(
                                             "Help & Instructions",
-                                            "SafeVault is a 100% offline password manager. Passwords are encrypted on your device and never leave it. Use Export to back up your data regularly.",
+                                            "SafeVault is a 100% offline password manager. Passwords are encrypted on your device and never leave it. Use Export to back up your data regularly."
                                         );
                                     }
                                 }}
                             >
-                                <Text style={styles.itemTitle}>
-                                    Help & Guide
-                                </Text>
+                                <Text style={styles.itemTitle}>Help & Guide</Text>
                                 <Text style={styles.itemSubtitle}>
                                     How offline zero-knowledge security works
                                 </Text>
@@ -266,17 +264,13 @@ export function SidebarDrawer({
                                     SafeVault Architecture
                                 </Text>
                                 <Text style={styles.infoLine}>
-                                    1. Offline Guarantee: No internet permission
-                                    is granted to this application.
+                                    1. Offline Guarantee: No internet permission is granted to this application.
                                 </Text>
                                 <Text style={styles.infoLine}>
-                                    2. Zero Knowledge: Encrypted locally using
-                                    AES-256-GCM derived from your Master
-                                    Password.
+                                    2. Zero Knowledge: Encrypted locally using AES-256-GCM derived from your Master Password.
                                 </Text>
                                 <Text style={styles.infoLine}>
-                                    3. Verifiable: Open source codebase
-                                    available for review.
+                                    3. Verifiable: Open source codebase available for review.
                                 </Text>
 
                                 <TouchableOpacity
@@ -290,7 +284,43 @@ export function SidebarDrawer({
                             </View>
                         </View>
 
-                        {/* 6. Updates */}
+                        {/* 6. Feedback & Beta Notice */}
+                        <View style={styles.section}>
+                            <Text style={styles.sectionHeader}>
+                                FEEDBACK & BETA NOTICE
+                            </Text>
+                            <View style={styles.infoCard}>
+                                <Text style={styles.infoCardTitle}>
+                                    Beta Testing (v1.0.0-beta)
+                                </Text>
+                                <Text style={styles.warningLine}>
+                                    Warning: This is an early beta release. Do not fully depend on SafeVault as your sole storage for critical passwords yet, as file backup and migration are still in active development.
+                                </Text>
+                                <Text style={styles.infoTextMuted}>
+                                    Feedbacks, bug reports, and suggestions are highly appreciated. You can post an issue on the GitHub repository or contact the developer directly:
+                                </Text>
+
+                                <View style={styles.emailRow}>
+                                    <Text
+                                        style={styles.emailText}
+                                        numberOfLines={1}
+                                        ellipsizeMode="middle"
+                                    >
+                                        {FEEDBACK_EMAIL}
+                                    </Text>
+                                    <TouchableOpacity
+                                        style={styles.copySmallButton}
+                                        onPress={handleCopyEmail}
+                                    >
+                                        <Text style={styles.copySmallButtonText}>
+                                            Copy Email
+                                        </Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        </View>
+
+                        {/* 7. Updates */}
                         <View style={styles.section}>
                             <Text style={styles.sectionHeader}>UPDATES</Text>
                             <View style={styles.infoCard}>
@@ -298,8 +328,7 @@ export function SidebarDrawer({
                                     Release Channel
                                 </Text>
                                 <Text style={styles.infoTextMuted}>
-                                    Download latest standalone APK updates or
-                                    review version changelogs:
+                                    Download latest standalone APK updates or review version changelogs:
                                 </Text>
                                 <Text
                                     style={styles.urlText}
@@ -465,11 +494,49 @@ const styles = StyleSheet.create({
         color: colors.textSecondary,
         marginBottom: 6,
     },
+    warningLine: {
+        fontSize: 12,
+        lineHeight: 18,
+        color: colors.danger,
+        marginBottom: 8,
+    },
     infoTextMuted: {
         fontSize: 12,
         lineHeight: 17,
         color: colors.textMuted,
-        marginBottom: 6,
+        marginBottom: 8,
+    },
+    emailRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        backgroundColor: colors.inputBackground,
+        borderWidth: 1,
+        borderColor: colors.surfaceBorder,
+        borderRadius: 6,
+        paddingHorizontal: 10,
+        paddingVertical: 8,
+        marginTop: 4,
+    },
+    emailText: {
+        fontSize: 12,
+        color: colors.primary,
+        fontWeight: "600",
+        flex: 1,
+        marginRight: 8,
+    },
+    copySmallButton: {
+        backgroundColor: colors.cardBackground,
+        borderWidth: 1,
+        borderColor: colors.surfaceBorder,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 4,
+    },
+    copySmallButtonText: {
+        fontSize: 11,
+        fontWeight: "600",
+        color: colors.textSecondary,
     },
     urlText: {
         fontSize: 11,

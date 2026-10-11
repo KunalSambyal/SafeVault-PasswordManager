@@ -6,16 +6,11 @@
         "orientation": "portrait",
         "icon": "./assets/icon.png",
         "userInterfaceStyle": "dark",
-        "ios": {
-            "supportsTablet": true
-        },
         "android": {
             "package": "com.safevault.app",
             "adaptiveIcon": {
-                "backgroundColor": "#000000",
-                "foregroundImage": "./assets/android-icon-foreground.png",
-                "backgroundImage": "./assets/android-icon-background.png",
-                "monochromeImage": "./assets/android-icon-monochrome.png"
+                "backgroundColor": "#0a090d",
+                "foregroundImage": "./assets/android-icon-foreground.png"
             },
             "predictiveBackGestureEnabled": false,
             "permissions": [],
@@ -24,13 +19,16 @@
                 "android.permission.ACCESS_NETWORK_STATE"
             ]
         },
-        "web": {
-            "favicon": "./assets/favicon.png"
-        },
         "plugins": [
             "expo-secure-store",
             "expo-sqlite",
-            "./plugins/withFlagSecure.js"
-        ]
+            "./plugins/withFlagSecure.js",
+            "./plugins/withArchitectureFilter.js"
+        ],
+        "extra": {
+            "eas": {
+                "projectId": "05cc0094-a8b6-4a3c-84c4-9ca4499a501c"
+            }
+        }
     }
 }
