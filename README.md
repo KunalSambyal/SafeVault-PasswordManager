@@ -27,7 +27,7 @@ Detailed technical documentation and development plans are available in the repo
 
 ## Download Beta
 
-- **Releases:** [https://github.com/kunalsambyal/SafeVault/releases](https://github.com/KunalSambyal/SafeVault-PasswordManager/releases)
+- **Releases:** [https://github.com/KunalSambyal/SafeVault-PasswordManager/releases](https://github.com/KunalSambyal/SafeVault-PasswordManager/releases)
 
 ---
 
