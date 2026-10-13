@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import {
     Modal,
     View,
@@ -12,7 +12,8 @@ import {
     Alert,
 } from "react-native";
 import * as Clipboard from "expo-clipboard";
-import { colors } from "../theme/colors";
+import { useTheme } from "../theme/ThemeContext";
+import { ThemeColors } from "../theme/colors";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const SIDEBAR_WIDTH = Math.min(SCREEN_WIDTH * 0.8, 340);
@@ -40,9 +41,12 @@ export function SidebarDrawer({
     onSettingsPress,
     onHelpPress,
 }: SidebarDrawerProps) {
+    const { colors, theme, setTheme } = useTheme();
     const slideAnim = useRef(new Animated.Value(SIDEBAR_WIDTH)).current;
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const [isAboutExpanded, setIsAboutExpanded] = useState(false);
+
+    const styles = useMemo(() => createStyles(colors), [colors]);
 
     useEffect(() => {
         if (visible) {
@@ -135,7 +139,7 @@ export function SidebarDrawer({
                             onPress={handleClose}
                             accessibilityLabel="Close menu"
                         >
-                            <Text style={styles.closeButtonText}>✕</Text>
+                            <Text style={styles.closeButtonText}>[X]</Text>
                         </TouchableOpacity>
                     </View>
 
@@ -150,28 +154,37 @@ export function SidebarDrawer({
                             <View style={styles.themeRow}>
                                 <Text style={styles.itemTitle}>Theme</Text>
                                 <View style={styles.themeToggleGroup}>
-                                    <View
+                                    <TouchableOpacity
                                         style={[
                                             styles.themePill,
-                                            styles.themePillActive,
+                                            theme === "dark" && styles.themePillActive,
                                         ]}
+                                        onPress={() => setTheme("dark")}
                                     >
                                         <Text
-                                            style={styles.themePillTextActive}
+                                            style={
+                                                theme === "dark"
+                                                    ? styles.themePillTextActive
+                                                    : styles.themePillText
+                                            }
                                         >
                                             Dark
                                         </Text>
-                                    </View>
+                                    </TouchableOpacity>
                                     <TouchableOpacity
-                                        style={styles.themePill}
-                                        onPress={() =>
-                                            Alert.alert(
-                                                "Theme",
-                                                "Light theme toggle will be enabled in a future update.",
-                                            )
-                                        }
+                                        style={[
+                                            styles.themePill,
+                                            theme === "light" && styles.themePillActive,
+                                        ]}
+                                        onPress={() => setTheme("light")}
                                     >
-                                        <Text style={styles.themePillText}>
+                                        <Text
+                                            style={
+                                                theme === "light"
+                                                    ? styles.themePillTextActive
+                                                    : styles.themePillText
+                                            }
+                                        >
                                             Light
                                         </Text>
                                     </TouchableOpacity>
@@ -238,7 +251,7 @@ export function SidebarDrawer({
                             >
                                 <Text style={styles.itemTitle}>Settings</Text>
                                 <Text style={styles.itemSubtitle}>
-                                    Security parameters and app preferences
+                                    Security parameters, GFS snapshots, and timeouts
                                 </Text>
                             </TouchableOpacity>
                         </View>
@@ -267,8 +280,7 @@ export function SidebarDrawer({
                                     Help & Guide
                                 </Text>
                                 <Text style={styles.itemSubtitle}>
-                                    Step-by-step guide on how to use the
-                                    application
+                                    Step-by-step zero-knowledge security guide
                                 </Text>
                             </TouchableOpacity>
                         </View>
@@ -347,11 +359,8 @@ export function SidebarDrawer({
                                     Beta Testing (v1.0.0-beta)
                                 </Text>
                                 <Text style={styles.warningLine}>
-                                    Warning: This is an early beta release. Do
-                                    not fully depend on SafeVault as your sole
-                                    storage for critical passwords yet, as file
-                                    backup and migration are still in active
-                                    development.
+                                    Notice: SafeVault is an offline tool. Always keep
+                                    your 12-word recovery phrase backed up safely.
                                 </Text>
                                 <Text style={styles.infoTextMuted}>
                                     Feedbacks, bug reports, and suggestions are
@@ -411,239 +420,241 @@ export function SidebarDrawer({
     );
 }
 
-const styles = StyleSheet.create({
-    modalOverlay: {
-        flex: 1,
-        flexDirection: "row",
-    },
-    backdrop: {
-        position: "absolute",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: "rgba(0, 0, 0, 0.65)",
-    },
-    sidebar: {
-        position: "absolute",
-        right: 0,
-        top: 0,
-        bottom: 0,
-        width: SIDEBAR_WIDTH,
-        backgroundColor: colors.surface,
-        borderLeftWidth: 1,
-        borderLeftColor: colors.surfaceBorder,
-        paddingTop: 48,
-    },
-    header: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        paddingHorizontal: 20,
-        paddingBottom: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.surfaceBorder,
-    },
-    headerTitle: {
-        fontSize: 20,
-        fontWeight: "700",
-        color: colors.textPrimary,
-    },
-    closeButton: {
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-    },
-    closeButtonText: {
-        fontSize: 20,
-        color: colors.textSecondary,
-        fontWeight: "600",
-    },
-    scrollArea: {
-        flex: 1,
-    },
-    scrollContent: {
-        paddingHorizontal: 16,
-        paddingTop: 16,
-        paddingBottom: 40,
-    },
-    section: {
-        marginBottom: 22,
-    },
-    sectionHeader: {
-        fontSize: 11,
-        fontWeight: "700",
-        letterSpacing: 1,
-        color: colors.textMuted,
-        marginBottom: 8,
-        paddingLeft: 4,
-    },
-    themeRow: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        backgroundColor: colors.cardBackground,
-        paddingHorizontal: 14,
-        paddingVertical: 10,
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: colors.surfaceBorder,
-    },
-    themeToggleGroup: {
-        flexDirection: "row",
-        backgroundColor: colors.inputBackground,
-        borderRadius: 6,
-        padding: 2,
-    },
-    themePill: {
-        paddingHorizontal: 12,
-        paddingVertical: 5,
-        borderRadius: 4,
-    },
-    themePillActive: {
-        backgroundColor: colors.primary,
-    },
-    themePillText: {
-        fontSize: 12,
-        color: colors.textSecondary,
-        fontWeight: "600",
-    },
-    themePillTextActive: {
-        fontSize: 12,
-        color: colors.background,
-        fontWeight: "700",
-    },
-    actionCard: {
-        backgroundColor: colors.cardBackground,
-        paddingHorizontal: 14,
-        paddingVertical: 12,
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: colors.surfaceBorder,
-        marginBottom: 8,
-    },
-    itemTitle: {
-        fontSize: 15,
-        fontWeight: "600",
-        color: colors.textPrimary,
-    },
-    itemSubtitle: {
-        fontSize: 12,
-        color: colors.textSecondary,
-        marginTop: 2,
-    },
-    infoCard: {
-        backgroundColor: colors.cardBackground,
-        padding: 14,
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: colors.surfaceBorder,
-    },
-    accordionHeader: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: 6,
-    },
-    infoCardTitle: {
-        fontSize: 14,
-        fontWeight: "700",
-        color: colors.textPrimary,
-    },
-    expandIndicator: {
-        fontSize: 12,
-        color: colors.textMuted,
-        fontWeight: "700",
-    },
-    oneLinerText: {
-        fontSize: 12,
-        lineHeight: 18,
-        color: colors.textSecondary,
-    },
-    expandedContent: {
-        marginTop: 10,
-    },
-    divider: {
-        height: 1,
-        backgroundColor: colors.surfaceBorder,
-        marginBottom: 10,
-    },
-    architectureTitle: {
-        fontSize: 13,
-        fontWeight: "700",
-        color: colors.textPrimary,
-        marginBottom: 6,
-    },
-    infoLine: {
-        fontSize: 12,
-        lineHeight: 18,
-        color: colors.textSecondary,
-        marginBottom: 6,
-    },
-    starSupportText: {
-        fontSize: 12,
-        lineHeight: 17,
-        color: colors.accent,
-        marginTop: 4,
-        marginBottom: 10,
-    },
-    wideButton: {
-        marginTop: 6,
-        backgroundColor: colors.inputBackground,
-        borderWidth: 1,
-        borderColor: colors.surfaceBorder,
-        paddingVertical: 9,
-        paddingHorizontal: 12,
-        borderRadius: 6,
-        alignItems: "center",
-        justifyContent: "center",
-    },
-    wideButtonText: {
-        fontSize: 12,
-        fontWeight: "600",
-        color: colors.primary,
-    },
-    warningLine: {
-        fontSize: 12,
-        lineHeight: 18,
-        color: colors.danger,
-        marginBottom: 8,
-    },
-    infoTextMuted: {
-        fontSize: 12,
-        lineHeight: 17,
-        color: colors.textMuted,
-        marginBottom: 8,
-    },
-    emailRow: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        backgroundColor: colors.inputBackground,
-        borderWidth: 1,
-        borderColor: colors.surfaceBorder,
-        borderRadius: 6,
-        paddingHorizontal: 10,
-        paddingVertical: 8,
-        marginTop: 4,
-    },
-    emailText: {
-        fontSize: 12,
-        color: colors.primary,
-        fontWeight: "600",
-        flex: 1,
-        marginRight: 8,
-    },
-    copySmallButton: {
-        backgroundColor: colors.cardBackground,
-        borderWidth: 1,
-        borderColor: colors.surfaceBorder,
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        borderRadius: 4,
-    },
-    copySmallButtonText: {
-        fontSize: 11,
-        fontWeight: "600",
-        color: colors.textSecondary,
-    },
-});
+function createStyles(colors: ThemeColors) {
+    return StyleSheet.create({
+        modalOverlay: {
+            flex: 1,
+            flexDirection: "row",
+        },
+        backdrop: {
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.65)",
+        },
+        sidebar: {
+            position: "absolute",
+            right: 0,
+            top: 0,
+            bottom: 0,
+            width: SIDEBAR_WIDTH,
+            backgroundColor: colors.surface,
+            borderLeftWidth: 1,
+            borderLeftColor: colors.surfaceBorder,
+            paddingTop: 48,
+        },
+        header: {
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            paddingHorizontal: 20,
+            paddingBottom: 16,
+            borderBottomWidth: 1,
+            borderBottomColor: colors.surfaceBorder,
+        },
+        headerTitle: {
+            fontSize: 20,
+            fontWeight: "700",
+            color: colors.textPrimary,
+        },
+        closeButton: {
+            paddingHorizontal: 8,
+            paddingVertical: 4,
+        },
+        closeButtonText: {
+            fontSize: 14,
+            color: colors.textSecondary,
+            fontWeight: "600",
+        },
+        scrollArea: {
+            flex: 1,
+        },
+        scrollContent: {
+            paddingHorizontal: 16,
+            paddingTop: 16,
+            paddingBottom: 40,
+        },
+        section: {
+            marginBottom: 22,
+        },
+        sectionHeader: {
+            fontSize: 11,
+            fontWeight: "700",
+            letterSpacing: 1,
+            color: colors.textMuted,
+            marginBottom: 8,
+            paddingLeft: 4,
+        },
+        themeRow: {
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            backgroundColor: colors.cardBackground,
+            paddingHorizontal: 14,
+            paddingVertical: 10,
+            borderRadius: 8,
+            borderWidth: 1,
+            borderColor: colors.surfaceBorder,
+        },
+        themeToggleGroup: {
+            flexDirection: "row",
+            backgroundColor: colors.inputBackground,
+            borderRadius: 6,
+            padding: 2,
+        },
+        themePill: {
+            paddingHorizontal: 12,
+            paddingVertical: 5,
+            borderRadius: 4,
+        },
+        themePillActive: {
+            backgroundColor: colors.primary,
+        },
+        themePillText: {
+            fontSize: 12,
+            color: colors.textSecondary,
+            fontWeight: "600",
+        },
+        themePillTextActive: {
+            fontSize: 12,
+            color: colors.background,
+            fontWeight: "700",
+        },
+        actionCard: {
+            backgroundColor: colors.cardBackground,
+            paddingHorizontal: 14,
+            paddingVertical: 12,
+            borderRadius: 8,
+            borderWidth: 1,
+            borderColor: colors.surfaceBorder,
+            marginBottom: 8,
+        },
+        itemTitle: {
+            fontSize: 15,
+            fontWeight: "600",
+            color: colors.textPrimary,
+        },
+        itemSubtitle: {
+            fontSize: 12,
+            color: colors.textSecondary,
+            marginTop: 2,
+        },
+        infoCard: {
+            backgroundColor: colors.cardBackground,
+            padding: 14,
+            borderRadius: 8,
+            borderWidth: 1,
+            borderColor: colors.surfaceBorder,
+        },
+        accordionHeader: {
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 6,
+        },
+        infoCardTitle: {
+            fontSize: 14,
+            fontWeight: "700",
+            color: colors.textPrimary,
+        },
+        expandIndicator: {
+            fontSize: 12,
+            color: colors.textMuted,
+            fontWeight: "700",
+        },
+        oneLinerText: {
+            fontSize: 12,
+            lineHeight: 18,
+            color: colors.textSecondary,
+        },
+        expandedContent: {
+            marginTop: 10,
+        },
+        divider: {
+            height: 1,
+            backgroundColor: colors.surfaceBorder,
+            marginBottom: 10,
+        },
+        architectureTitle: {
+            fontSize: 13,
+            fontWeight: "700",
+            color: colors.textPrimary,
+            marginBottom: 6,
+        },
+        infoLine: {
+            fontSize: 12,
+            lineHeight: 18,
+            color: colors.textSecondary,
+            marginBottom: 6,
+        },
+        starSupportText: {
+            fontSize: 12,
+            lineHeight: 17,
+            color: colors.accent,
+            marginTop: 4,
+            marginBottom: 10,
+        },
+        wideButton: {
+            marginTop: 6,
+            backgroundColor: colors.inputBackground,
+            borderWidth: 1,
+            borderColor: colors.surfaceBorder,
+            paddingVertical: 9,
+            paddingHorizontal: 12,
+            borderRadius: 6,
+            alignItems: "center",
+            justifyContent: "center",
+        },
+        wideButtonText: {
+            fontSize: 12,
+            fontWeight: "600",
+            color: colors.primary,
+        },
+        warningLine: {
+            fontSize: 12,
+            lineHeight: 18,
+            color: colors.danger,
+            marginBottom: 8,
+        },
+        infoTextMuted: {
+            fontSize: 12,
+            lineHeight: 17,
+            color: colors.textMuted,
+            marginBottom: 8,
+        },
+        emailRow: {
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            backgroundColor: colors.inputBackground,
+            borderWidth: 1,
+            borderColor: colors.surfaceBorder,
+            borderRadius: 6,
+            paddingHorizontal: 10,
+            paddingVertical: 8,
+            marginTop: 4,
+        },
+        emailText: {
+            fontSize: 12,
+            color: colors.primary,
+            fontWeight: "600",
+            flex: 1,
+            marginRight: 8,
+        },
+        copySmallButton: {
+            backgroundColor: colors.cardBackground,
+            borderWidth: 1,
+            borderColor: colors.surfaceBorder,
+            paddingHorizontal: 10,
+            paddingVertical: 5,
+            borderRadius: 4,
+        },
+        copySmallButtonText: {
+            fontSize: 11,
+            fontWeight: "600",
+            color: colors.textSecondary,
+        },
+    });
+}

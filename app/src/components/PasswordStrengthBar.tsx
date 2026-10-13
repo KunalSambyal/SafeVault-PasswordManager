@@ -1,9 +1,11 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { calculatePasswordStrength } from "../utils/generator";
-import { colors } from "../theme/colors";
+import { useTheme } from "../theme/ThemeContext";
 
 export function PasswordStrengthBar({ password }: { password: string }) {
+    const { colors } = useTheme();
+
     if (!password) return null;
 
     const strength = calculatePasswordStrength(password);
@@ -11,7 +13,12 @@ export function PasswordStrengthBar({ password }: { password: string }) {
 
     return (
         <View style={styles.container}>
-            <View style={styles.barTrack}>
+            <View
+                style={[
+                    styles.barTrack,
+                    { backgroundColor: colors.surfaceBorder },
+                ]}
+            >
                 <View
                     style={[
                         styles.barFill,
@@ -40,7 +47,6 @@ const styles = StyleSheet.create({
     barTrack: {
         flex: 1,
         height: 4,
-        backgroundColor: colors.surfaceBorder,
         borderRadius: 2,
         overflow: "hidden",
     },

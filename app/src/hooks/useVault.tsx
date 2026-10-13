@@ -24,6 +24,10 @@ import {
     bytesToHex,
 } from "../crypto";
 import { IdentitySummary } from "../types/database";
+import {
+    initializeVaultFromMigration,
+    MigrationCredentialItem,
+} from "../utils/migrationService";
 
 interface VaultContextType {
     isReady: boolean;
@@ -38,6 +42,10 @@ interface VaultContextType {
     resetMasterPassword: (newPassword: string) => Promise<void>;
     unlockWithBiometricSession: () => Promise<boolean>;
     setupNewVault: (masterPassword: string) => Promise<string>;
+    setupVaultFromMigration: (
+        items: MigrationCredentialItem[],
+        masterPassword: string,
+    ) => Promise<string>;
     completeOnboarding: () => Promise<void>;
     lockVault: (clearBiometrics?: boolean) => Promise<void>;
     refreshIdentities: () => Promise<void>;
@@ -96,6 +104,16 @@ export function VaultProvider({ children }: { children: ReactNode }) {
         setDek(initializedDek);
 
         return metadata.mnemonic;
+    }
+
+    async function setupVaultFromMigration(
+        items: MigrationCredentialItem[],
+        masterPassword: string,
+    ): Promise<string> {
+        const { mnemonic, dek: initializedDek } =
+            await initializeVaultFromMigration(items, masterPassword);
+        setDek(initializedDek);
+        return mnemonic;
     }
 
     async function completeOnboarding(): Promise<void> {
@@ -244,6 +262,7 @@ export function VaultProvider({ children }: { children: ReactNode }) {
                 resetMasterPassword,
                 unlockWithBiometricSession,
                 setupNewVault,
+                setupVaultFromMigration,
                 completeOnboarding,
                 lockVault,
                 refreshIdentities: loadIdentities,

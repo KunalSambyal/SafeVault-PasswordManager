@@ -4,6 +4,7 @@ import {
     CredentialInput,
     IdentitySummary,
 } from "../types/database";
+import { performRotationalBackup } from "../utils/rotationalBackup";
 
 export async function getIdentitiesWithCounts(): Promise<IdentitySummary[]> {
     const db = await getDatabase();
@@ -38,6 +39,7 @@ export async function getCredentialById(
 }
 
 export async function addCredential(input: CredentialInput): Promise<number> {
+    await performRotationalBackup();
     const db = await getDatabase();
     const query = `
         INSERT INTO credentials (identity, label, encrypted_password, iv, auth_tag)
@@ -57,6 +59,7 @@ export async function updateCredential(
     id: number,
     input: CredentialInput,
 ): Promise<void> {
+    await performRotationalBackup();
     const db = await getDatabase();
     const query = `
         UPDATE credentials
@@ -79,6 +82,7 @@ export async function updateCredential(
 }
 
 export async function deleteCredential(id: number): Promise<void> {
+    await performRotationalBackup();
     const db = await getDatabase();
     const query = `DELETE FROM credentials WHERE id = ?;`;
     await db.runAsync(query, [id]);

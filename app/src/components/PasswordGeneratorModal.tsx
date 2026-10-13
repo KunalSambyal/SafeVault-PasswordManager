@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { View, Text, Modal, TouchableOpacity, StyleSheet } from "react-native";
 import { generatePassword, generatePassphrase } from "../utils/generator";
-import { colors } from "../theme/colors";
+import { useTheme } from "../theme/ThemeContext";
+import { ThemeColors } from "../theme/colors";
 
 interface PasswordGeneratorModalProps {
     visible: boolean;
@@ -14,6 +15,7 @@ export function PasswordGeneratorModal({
     onClose,
     onApplyPassword,
 }: PasswordGeneratorModalProps) {
+    const { colors } = useTheme();
     const [length, setLength] = useState(16);
     const [mode, setMode] = useState<"password" | "passphrase">("password");
     const [generated, setGenerated] = useState(() =>
@@ -25,6 +27,8 @@ export function PasswordGeneratorModal({
             includeSymbols: true,
         }),
     );
+
+    const styles = useMemo(() => createStyles(colors), [colors]);
 
     function handleRegenerate() {
         if (mode === "passphrase") {
@@ -185,141 +189,143 @@ export function PasswordGeneratorModal({
     );
 }
 
-const styles = StyleSheet.create({
-    overlay: {
-        flex: 1,
-        backgroundColor: "rgba(0, 0, 0, 0.75)",
-        justifyContent: "center",
-        padding: 20,
-    },
-    modalCard: {
-        backgroundColor: colors.cardBackground,
-        borderRadius: 12,
-        borderWidth: 1,
-        borderColor: colors.surfaceBorder,
-        padding: 20,
-    },
-    title: {
-        fontSize: 20,
-        fontWeight: "800",
-        color: colors.textPrimary,
-        marginBottom: 16,
-    },
-    modeTabs: {
-        flexDirection: "row",
-        backgroundColor: colors.inputBackground,
-        borderRadius: 8,
-        padding: 4,
-        marginBottom: 16,
-    },
-    tab: {
-        flex: 1,
-        paddingVertical: 8,
-        borderRadius: 6,
-        alignItems: "center",
-    },
-    activeTab: {
-        backgroundColor: colors.surfaceBorder,
-    },
-    tabText: {
-        color: colors.textSecondary,
-        fontWeight: "600",
-        fontSize: 14,
-    },
-    activeTabText: {
-        color: colors.textPrimary,
-    },
-    previewContainer: {
-        backgroundColor: colors.inputBackground,
-        borderWidth: 1,
-        borderColor: colors.surfaceBorder,
-        borderRadius: 8,
-        padding: 14,
-        marginBottom: 16,
-    },
-    previewText: {
-        color: colors.primary,
-        fontFamily: "monospace",
-        fontSize: 16,
-        fontWeight: "600",
-        textAlign: "center",
-    },
-    lengthRow: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: 16,
-    },
-    lengthLabel: {
-        color: colors.textSecondary,
-        fontSize: 14,
-        fontWeight: "600",
-    },
-    lengthButtons: {
-        flexDirection: "row",
-        gap: 8,
-    },
-    lengthChip: {
-        paddingHorizontal: 10,
-        paddingVertical: 6,
-        borderRadius: 6,
-        backgroundColor: colors.inputBackground,
-        borderWidth: 1,
-        borderColor: colors.surfaceBorder,
-    },
-    lengthChipActive: {
-        borderColor: colors.primary,
-        backgroundColor: colors.surfaceBorder,
-    },
-    lengthChipText: {
-        color: colors.textSecondary,
-        fontWeight: "600",
-        fontSize: 13,
-    },
-    lengthChipTextActive: {
-        color: colors.primary,
-    },
-    regenerateButton: {
-        backgroundColor: colors.surface,
-        borderWidth: 1,
-        borderColor: colors.surfaceBorder,
-        padding: 12,
-        borderRadius: 8,
-        alignItems: "center",
-        marginBottom: 16,
-    },
-    regenerateButtonText: {
-        color: colors.accent,
-        fontWeight: "700",
-        fontSize: 14,
-    },
-    actionRow: {
-        flexDirection: "row",
-        gap: 10,
-    },
-    cancelButton: {
-        flex: 1,
-        padding: 14,
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: colors.surfaceBorder,
-        alignItems: "center",
-    },
-    cancelButtonText: {
-        color: colors.textSecondary,
-        fontWeight: "600",
-        fontSize: 15,
-    },
-    applyButton: {
-        flex: 1,
-        backgroundColor: colors.primary,
-        padding: 14,
-        borderRadius: 8,
-        alignItems: "center",
-    },
-    applyButtonText: {
-        color: colors.background,
-        fontWeight: "700",
-        fontSize: 15,
-    },
-});
+function createStyles(colors: ThemeColors) {
+    return StyleSheet.create({
+        overlay: {
+            flex: 1,
+            backgroundColor: "rgba(0, 0, 0, 0.75)",
+            justifyContent: "center",
+            padding: 20,
+        },
+        modalCard: {
+            backgroundColor: colors.cardBackground,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: colors.surfaceBorder,
+            padding: 20,
+        },
+        title: {
+            fontSize: 20,
+            fontWeight: "800",
+            color: colors.textPrimary,
+            marginBottom: 16,
+        },
+        modeTabs: {
+            flexDirection: "row",
+            backgroundColor: colors.inputBackground,
+            borderRadius: 8,
+            padding: 4,
+            marginBottom: 16,
+        },
+        tab: {
+            flex: 1,
+            paddingVertical: 8,
+            borderRadius: 6,
+            alignItems: "center",
+        },
+        activeTab: {
+            backgroundColor: colors.surfaceBorder,
+        },
+        tabText: {
+            color: colors.textSecondary,
+            fontWeight: "600",
+            fontSize: 14,
+        },
+        activeTabText: {
+            color: colors.textPrimary,
+        },
+        previewContainer: {
+            backgroundColor: colors.inputBackground,
+            borderWidth: 1,
+            borderColor: colors.surfaceBorder,
+            borderRadius: 8,
+            padding: 14,
+            marginBottom: 16,
+        },
+        previewText: {
+            color: colors.primary,
+            fontFamily: "monospace",
+            fontSize: 16,
+            fontWeight: "600",
+            textAlign: "center",
+        },
+        lengthRow: {
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 16,
+        },
+        lengthLabel: {
+            color: colors.textSecondary,
+            fontSize: 14,
+            fontWeight: "600",
+        },
+        lengthButtons: {
+            flexDirection: "row",
+            gap: 8,
+        },
+        lengthChip: {
+            paddingHorizontal: 10,
+            paddingVertical: 6,
+            borderRadius: 6,
+            backgroundColor: colors.inputBackground,
+            borderWidth: 1,
+            borderColor: colors.surfaceBorder,
+        },
+        lengthChipActive: {
+            borderColor: colors.primary,
+            backgroundColor: colors.surfaceBorder,
+        },
+        lengthChipText: {
+            color: colors.textSecondary,
+            fontWeight: "600",
+            fontSize: 13,
+        },
+        lengthChipTextActive: {
+            color: colors.primary,
+        },
+        regenerateButton: {
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.surfaceBorder,
+            padding: 12,
+            borderRadius: 8,
+            alignItems: "center",
+            marginBottom: 16,
+        },
+        regenerateButtonText: {
+            color: colors.accent,
+            fontWeight: "700",
+            fontSize: 14,
+        },
+        actionRow: {
+            flexDirection: "row",
+            gap: 10,
+        },
+        cancelButton: {
+            flex: 1,
+            padding: 14,
+            borderRadius: 8,
+            borderWidth: 1,
+            borderColor: colors.surfaceBorder,
+            alignItems: "center",
+        },
+        cancelButtonText: {
+            color: colors.textSecondary,
+            fontWeight: "600",
+            fontSize: 15,
+        },
+        applyButton: {
+            flex: 1,
+            backgroundColor: colors.primary,
+            padding: 14,
+            borderRadius: 8,
+            alignItems: "center",
+        },
+        applyButtonText: {
+            color: colors.background,
+            fontWeight: "700",
+            fontSize: 15,
+        },
+    });
+}

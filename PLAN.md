@@ -112,9 +112,9 @@ The following capabilities are scheduled for subsequent releases following beta 
 
 ## 4. Engineering Milestones
 
-| Milestone       | Target Scope                                                             | Status         |
-| :-------------- | :----------------------------------------------------------------------- | :------------- |
-| **v1.0.0-beta** | Core crypto, database, full CRUD, biometrics, generator, sidebar UI, APK | **Completed**  |
-| **v1.1.0**      | GFS rotational backup, encrypted migration JSON export/import (hybrid)   | Next Milestone |
-| **v1.2.0**      | Settings panel, configurable timers, light theme, password health audit  | Planned        |
-| **v1.3.0**      | Offline user guide, custom field types, database export verification     | Planned        |
+| Milestone       | Target Scope                                                             | Status                                  |
+| :-------------- | :----------------------------------------------------------------------- | :-------------------------------------- |
+| **v1.0.0-beta** | Core crypto, database, full CRUD, biometrics, generator, sidebar UI, APK | **Completed**                           |
+| **v1.1.0**      | GFS rotational backup, encrypted migration JSON export/import (hybrid)   | **Implemented (Feature Branch)**        |
+| **v1.2.0**      | Settings panel, configurable timers, theme switching, offline user guide | **Implemented (Feature Branch)**        |
+| **v1.3.0**      | Vault health audit, custom field types, database export verification     | Planned                                 |

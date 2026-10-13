@@ -24,7 +24,8 @@
             "expo-sqlite",
             "./plugins/withFlagSecure.js",
             "./plugins/withArchitectureFilter.js",
-            "./plugins/withSensitiveClipboard.js"
+            "./plugins/withSensitiveClipboard.js",
+            "expo-sharing"
         ],
         "extra": {
             "eas": {

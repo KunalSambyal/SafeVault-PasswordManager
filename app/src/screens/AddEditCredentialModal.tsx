@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
     View,
     Text,
@@ -10,12 +10,13 @@ import {
 import { RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useVault } from "../hooks/useVault";
+import { useTheme } from "../theme/ThemeContext";
+import { ThemeColors } from "../theme/colors";
 import { addCredential, updateCredential } from "../db";
 import { encryptAESGCM } from "../crypto";
 import { PasswordStrengthBar } from "../components/PasswordStrengthBar";
 import { PasswordGeneratorModal } from "../components/PasswordGeneratorModal";
 import { RootStackParamList } from "../types/navigation";
-import { colors } from "../theme/colors";
 
 type RouteProps = RouteProp<RootStackParamList, "AddEditModal">;
 type NavProps = NativeStackNavigationProp<RootStackParamList, "AddEditModal">;
@@ -33,12 +34,15 @@ export function AddEditCredentialModal({
         initialLabel,
     } = route.params;
     const { dek, refreshIdentities } = useVault();
+    const { colors } = useTheme();
 
     const [identity, setIdentity] = useState(initialIdentity || "");
     const [label, setLabel] = useState(initialLabel || "");
     const [password, setPassword] = useState("");
     const [isMasked, setIsMasked] = useState(true);
     const [generatorVisible, setGeneratorVisible] = useState(false);
+
+    const styles = useMemo(() => createStyles(colors), [colors]);
 
     async function handleSave() {
         if (!identity.trim() || !label.trim() || !password.trim()) {
@@ -75,33 +79,30 @@ export function AddEditCredentialModal({
             await refreshIdentities();
             navigation.goBack();
         } catch {
-            Alert.alert(
-                "Save Failed",
-                "Failed to encrypt and store credential.",
-            );
+            Alert.alert("Save Error", "Failed to encrypt and store credential.");
         }
     }
 
     return (
         <View style={styles.container}>
             <Text style={styles.title}>
-                {credentialId ? "Update Credential" : "Add Credential"}
+                {credentialId ? "Edit Credential" : "Add Credential"}
             </Text>
 
-            <Text style={styles.label}>Identity (Email / Username)</Text>
+            <Text style={styles.label}>Account Identity</Text>
             <TextInput
                 style={styles.input}
-                placeholder="user@example.com"
+                placeholder="e.g. user@example.com or username"
                 placeholderTextColor={colors.textMuted}
+                autoCapitalize="none"
                 value={identity}
                 onChangeText={setIdentity}
-                autoCapitalize="none"
             />
 
             <Text style={styles.label}>Service Label</Text>
             <TextInput
                 style={styles.input}
-                placeholder="e.g. Spotify, Work Email"
+                placeholder="e.g. Personal Banking or Spotify"
                 placeholderTextColor={colors.textMuted}
                 value={label}
                 onChangeText={setLabel}
@@ -163,97 +164,99 @@ export function AddEditCredentialModal({
     );
 }
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: colors.background,
-        padding: 24,
-        paddingTop: 48,
-    },
-    title: {
-        fontSize: 24,
-        fontWeight: "800",
-        color: colors.textPrimary,
-        marginBottom: 24,
-    },
-    label: {
-        fontSize: 13,
-        color: colors.textSecondary,
-        marginBottom: 6,
-        fontWeight: "600",
-    },
-    passwordHeader: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: 6,
-    },
-    generateLink: {
-        color: colors.primary,
-        fontSize: 13,
-        fontWeight: "700",
-    },
-    input: {
-        backgroundColor: colors.inputBackground,
-        borderWidth: 1,
-        borderColor: colors.surfaceBorder,
-        borderRadius: 8,
-        color: colors.textPrimary,
-        padding: 14,
-        marginBottom: 16,
-        fontSize: 16,
-    },
-    passwordRow: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 8,
-        marginBottom: 4,
-    },
-    passwordInput: {
-        flex: 1,
-        marginBottom: 0,
-    },
-    maskToggle: {
-        backgroundColor: colors.cardBackground,
-        borderWidth: 1,
-        borderColor: colors.surfaceBorder,
-        paddingHorizontal: 14,
-        paddingVertical: 14,
-        borderRadius: 8,
-    },
-    maskToggleText: {
-        color: colors.accent,
-        fontWeight: "600",
-        fontSize: 14,
-    },
-    buttonRow: {
-        flexDirection: "row",
-        gap: 12,
-        marginTop: 16,
-    },
-    cancelButton: {
-        flex: 1,
-        padding: 16,
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: colors.surfaceBorder,
-        alignItems: "center",
-    },
-    cancelButtonText: {
-        color: colors.textSecondary,
-        fontWeight: "600",
-        fontSize: 16,
-    },
-    saveButton: {
-        flex: 1,
-        backgroundColor: colors.primary,
-        padding: 16,
-        borderRadius: 8,
-        alignItems: "center",
-    },
-    saveButtonText: {
-        color: colors.background,
-        fontWeight: "700",
-        fontSize: 16,
-    },
-});
+function createStyles(colors: ThemeColors) {
+    return StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: colors.background,
+            padding: 24,
+            paddingTop: 48,
+        },
+        title: {
+            fontSize: 24,
+            fontWeight: "800",
+            color: colors.textPrimary,
+            marginBottom: 24,
+        },
+        label: {
+            fontSize: 13,
+            color: colors.textSecondary,
+            marginBottom: 6,
+            fontWeight: "600",
+        },
+        passwordHeader: {
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 6,
+        },
+        generateLink: {
+            color: colors.primary,
+            fontSize: 13,
+            fontWeight: "700",
+        },
+        input: {
+            backgroundColor: colors.inputBackground,
+            borderWidth: 1,
+            borderColor: colors.surfaceBorder,
+            borderRadius: 8,
+            color: colors.textPrimary,
+            padding: 14,
+            marginBottom: 16,
+            fontSize: 16,
+        },
+        passwordRow: {
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 8,
+            marginBottom: 4,
+        },
+        passwordInput: {
+            flex: 1,
+            marginBottom: 0,
+        },
+        maskToggle: {
+            backgroundColor: colors.cardBackground,
+            borderWidth: 1,
+            borderColor: colors.surfaceBorder,
+            paddingHorizontal: 14,
+            paddingVertical: 14,
+            borderRadius: 8,
+        },
+        maskToggleText: {
+            color: colors.accent,
+            fontWeight: "600",
+            fontSize: 14,
+        },
+        buttonRow: {
+            flexDirection: "row",
+            gap: 12,
+            marginTop: 16,
+        },
+        cancelButton: {
+            flex: 1,
+            padding: 16,
+            borderRadius: 8,
+            borderWidth: 1,
+            borderColor: colors.surfaceBorder,
+            alignItems: "center",
+        },
+        cancelButtonText: {
+            color: colors.textSecondary,
+            fontWeight: "600",
+            fontSize: 16,
+        },
+        saveButton: {
+            flex: 1,
+            backgroundColor: colors.primary,
+            padding: 16,
+            borderRadius: 8,
+            alignItems: "center",
+        },
+        saveButtonText: {
+            color: colors.background,
+            fontWeight: "700",
+            fontSize: 16,
+        },
+    });
+}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
     View,
     Text,
@@ -10,13 +10,15 @@ import {
 import { RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useVault } from "../hooks/useVault";
+import { useTheme } from "../theme/ThemeContext";
+import { ThemeColors } from "../theme/colors";
 import { getCredentialsByIdentity, deleteCredential } from "../db";
 import { decryptAESGCM } from "../crypto";
 import { authenticateWithBiometrics } from "../utils/biometrics";
 import { copySecureString } from "../utils/clipboard";
+import { getAppSettings } from "../utils/settingsStore";
 import { CredentialRecord } from "../types/database";
 import { RootStackParamList } from "../types/navigation";
-import { colors } from "../theme/colors";
 
 type RouteProps = RouteProp<RootStackParamList, "LabelVault">;
 type NavProps = NativeStackNavigationProp<RootStackParamList, "LabelVault">;
@@ -30,11 +32,14 @@ export function LabelVaultScreen({
 }) {
     const { identity } = route.params;
     const { dek, refreshIdentities } = useVault();
+    const { colors } = useTheme();
     const [items, setItems] = useState<CredentialRecord[]>([]);
     const [revealedPasswords, setRevealedPasswords] = useState<{
         [id: number]: string;
     }>({});
     const [timers, setTimers] = useState<{ [id: number]: number }>({});
+
+    const styles = useMemo(() => createStyles(colors), [colors]);
 
     useEffect(() => {
         loadItems();
@@ -70,8 +75,16 @@ export function LabelVaultScreen({
     }, []);
 
     async function loadItems() {
-        const records = await getCredentialsByIdentity(identity);
-        setItems(records);
+        try {
+            const list = await getCredentialsByIdentity(identity);
+            setItems(list);
+            if (list.length === 0) {
+                await refreshIdentities();
+                navigation.goBack();
+            }
+        } catch {
+            Alert.alert("Error", "Failed to load credentials.");
+        }
     }
 
     async function handleViewPassword(item: CredentialRecord) {
@@ -134,10 +147,13 @@ export function LabelVaultScreen({
                 dek,
             );
 
-            await copySecureString(plaintext, 30);
+            const settings = await getAppSettings();
+            const timeoutSeconds = settings.clipboardTimeout || 30;
+
+            await copySecureString(plaintext, timeoutSeconds);
             Alert.alert(
                 "Copied",
-                "Password copied. Clipboard will clear automatically in 30 seconds.",
+                `Password copied. Clipboard will clear automatically in ${timeoutSeconds} seconds.`,
             );
         } catch {
             Alert.alert("Error", "Failed to copy password.");
@@ -151,30 +167,37 @@ export function LabelVaultScreen({
         if (!verified) return;
 
         navigation.navigate("AddEditModal", {
-            credentialId: item.id,
             identity: item.identity,
+            credentialId: item.id,
             initialLabel: item.label,
         });
     }
 
-    async function handleDelete(id: number, label: string) {
+    async function handleDelete(id: number, labelName: string) {
         const verified = await authenticateWithBiometrics(
-            `Verify identity to delete ${label}`,
+            `Verify identity to delete ${labelName}`,
         );
         if (!verified) return;
 
         Alert.alert(
-            "Confirm Deletion",
-            `Permanently remove ${label}? This action cannot be undone.`,
+            "Confirm Delete",
+            `Are you sure you want to delete ${labelName}? A local rotational backup snapshot will be preserved.`,
             [
                 { text: "Cancel", style: "cancel" },
                 {
                     text: "Delete",
                     style: "destructive",
                     onPress: async () => {
-                        await deleteCredential(id);
-                        await loadItems();
-                        await refreshIdentities();
+                        try {
+                            await deleteCredential(id);
+                            await refreshIdentities();
+                            await loadItems();
+                        } catch {
+                            Alert.alert(
+                                "Error",
+                                "Failed to delete credential.",
+                            );
+                        }
                     },
                 },
             ],
@@ -183,19 +206,19 @@ export function LabelVaultScreen({
 
     function renderCard({ item }: { item: CredentialRecord }) {
         const isRevealed = !!revealedPasswords[item.id];
-        const countdown = timers[item.id] || 0;
+        const remaining = timers[item.id];
 
         return (
             <View style={styles.card}>
                 <View style={styles.cardHeader}>
                     <Text style={styles.cardLabel}>{item.label}</Text>
-                    {countdown > 0 && (
-                        <Text style={styles.timerBadge}>{countdown}s</Text>
+                    {isRevealed && remaining !== undefined && (
+                        <Text style={styles.timerBadge}>{remaining}s</Text>
                     )}
                 </View>
 
                 <View style={styles.passwordContainer}>
-                    <Text style={styles.passwordText} selectable={isRevealed}>
+                    <Text style={styles.passwordText}>
                         {isRevealed
                             ? revealedPasswords[item.id]
                             : "••••••••••••"}
@@ -263,97 +286,99 @@ export function LabelVaultScreen({
     );
 }
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: colors.background,
-        paddingHorizontal: 16,
-        paddingTop: 48,
-    },
-    header: {
-        flexDirection: "row",
-        alignItems: "center",
-        marginBottom: 20,
-        gap: 12,
-    },
-    backButton: {
-        paddingVertical: 6,
-        paddingHorizontal: 10,
-        backgroundColor: colors.cardBackground,
-        borderRadius: 6,
-    },
-    backButtonText: {
-        color: colors.primary,
-        fontSize: 14,
-        fontWeight: "600",
-    },
-    headerTitle: {
-        fontSize: 20,
-        fontWeight: "700",
-        color: colors.textPrimary,
-        flex: 1,
-    },
-    listContent: {
-        paddingBottom: 24,
-    },
-    card: {
-        backgroundColor: colors.cardBackground,
-        borderWidth: 1,
-        borderColor: colors.surfaceBorder,
-        borderRadius: 8,
-        padding: 16,
-        marginBottom: 12,
-    },
-    cardHeader: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: 10,
-    },
-    cardLabel: {
-        fontSize: 17,
-        fontWeight: "700",
-        color: colors.textPrimary,
-    },
-    timerBadge: {
-        color: colors.accent,
-        fontSize: 12,
-        fontWeight: "700",
-    },
-    passwordContainer: {
-        backgroundColor: colors.inputBackground,
-        borderRadius: 6,
-        padding: 12,
-        marginBottom: 14,
-    },
-    passwordText: {
-        color: colors.textPrimary,
-        fontFamily: "monospace",
-        fontSize: 15,
-    },
-    cardActions: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        gap: 6,
-    },
-    actionButton: {
-        flex: 1,
-        backgroundColor: colors.surface,
-        borderWidth: 1,
-        borderColor: colors.surfaceBorder,
-        paddingVertical: 10,
-        borderRadius: 6,
-        alignItems: "center",
-    },
-    actionText: {
-        color: colors.textPrimary,
-        fontWeight: "600",
-        fontSize: 12,
-    },
-    deleteButton: {
-        borderColor: colors.dangerBackground,
-    },
-    deleteText: {
-        color: colors.danger,
-    },
-});
+function createStyles(colors: ThemeColors) {
+    return StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: colors.background,
+            paddingHorizontal: 16,
+            paddingTop: 48,
+        },
+        header: {
+            flexDirection: "row",
+            alignItems: "center",
+            marginBottom: 20,
+            gap: 12,
+        },
+        backButton: {
+            paddingVertical: 6,
+            paddingHorizontal: 10,
+            backgroundColor: colors.cardBackground,
+            borderRadius: 6,
+        },
+        backButtonText: {
+            color: colors.primary,
+            fontSize: 14,
+            fontWeight: "600",
+        },
+        headerTitle: {
+            fontSize: 20,
+            fontWeight: "700",
+            color: colors.textPrimary,
+            flex: 1,
+        },
+        listContent: {
+            paddingBottom: 24,
+        },
+        card: {
+            backgroundColor: colors.cardBackground,
+            borderWidth: 1,
+            borderColor: colors.surfaceBorder,
+            borderRadius: 8,
+            padding: 16,
+            marginBottom: 12,
+        },
+        cardHeader: {
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 10,
+        },
+        cardLabel: {
+            fontSize: 17,
+            fontWeight: "700",
+            color: colors.textPrimary,
+        },
+        timerBadge: {
+            color: colors.accent,
+            fontSize: 12,
+            fontWeight: "700",
+        },
+        passwordContainer: {
+            backgroundColor: colors.inputBackground,
+            borderRadius: 6,
+            padding: 12,
+            marginBottom: 14,
+        },
+        passwordText: {
+            color: colors.textPrimary,
+            fontFamily: "monospace",
+            fontSize: 15,
+        },
+        cardActions: {
+            flexDirection: "row",
+            justifyContent: "space-between",
+            gap: 6,
+        },
+        actionButton: {
+            flex: 1,
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.surfaceBorder,
+            paddingVertical: 10,
+            borderRadius: 6,
+            alignItems: "center",
+        },
+        actionText: {
+            color: colors.textPrimary,
+            fontWeight: "600",
+            fontSize: 12,
+        },
+        deleteButton: {
+            borderColor: colors.dangerBackground,
+        },
+        deleteText: {
+            color: colors.danger,
+        },
+    });
+}

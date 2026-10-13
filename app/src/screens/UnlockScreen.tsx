@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
     View,
     Text,
@@ -8,12 +8,14 @@ import {
     ActivityIndicator,
 } from "react-native";
 import { useVault } from "../hooks/useVault";
+import { useTheme } from "../theme/ThemeContext";
+import { ThemeColors } from "../theme/colors";
 import {
     authenticateWithBiometrics,
     isBiometricsAvailable,
 } from "../utils/biometrics";
 import { getSessionDek } from "../crypto";
-import { colors } from "../theme/colors";
+import { getAppSettings } from "../utils/settingsStore";
 
 export function UnlockScreen() {
     const {
@@ -23,6 +25,7 @@ export function UnlockScreen() {
         resetMasterPassword,
         unlockWithBiometricSession,
     } = useVault();
+    const { colors } = useTheme();
 
     const [password, setPassword] = useState("");
     const [useRecovery, setUseRecovery] = useState(false);
@@ -36,14 +39,19 @@ export function UnlockScreen() {
     const [newPassword, setNewPassword] = useState("");
     const [confirmNewPassword, setConfirmNewPassword] = useState("");
 
+    const styles = useMemo(() => createStyles(colors), [colors]);
+
     useEffect(() => {
-        checkBiometrics();
+        void checkBiometrics();
     }, []);
 
     async function checkBiometrics() {
         const available = await isBiometricsAvailable();
         const cachedDek = await getSessionDek();
-        setHasBiometrics(available && cachedDek !== null);
+        const settings = await getAppSettings();
+        setHasBiometrics(
+            available && cachedDek !== null && settings.biometricsEnabled,
+        );
     }
 
     async function handleBiometricUnlock() {
@@ -98,16 +106,14 @@ export function UnlockScreen() {
                     // 3. Both factors passed: transition to setting a new Master Password
                     setIsResettingPassword(true);
                     setIsLoading(false);
-                } catch (err: any) {
+                } catch {
                     abortRecovery();
-                    setErrorMessage(
-                        err?.message || "Failed to verify recovery phrase.",
-                    );
+                    setErrorMessage("Recovery verification failed.");
                     setIsLoading(false);
                 }
-            }, 20);
+            }, 50);
         } else {
-            if (!password.trim()) {
+            if (!password) {
                 setErrorMessage("Please enter your Master Password.");
                 return;
             }
@@ -120,12 +126,12 @@ export function UnlockScreen() {
                     if (!ok) {
                         setErrorMessage("Incorrect Master Password.");
                     }
-                } catch (err: any) {
-                    setErrorMessage(err?.message || "Failed to unlock vault.");
+                } catch {
+                    setErrorMessage("An error occurred during vault unlock.");
                 } finally {
                     setIsLoading(false);
                 }
-            }, 20);
+            }, 50);
         }
     }
 
@@ -133,9 +139,7 @@ export function UnlockScreen() {
         setErrorMessage("");
 
         if (newPassword.length < 8) {
-            setErrorMessage(
-                "New Master Password must be at least 8 characters.",
-            );
+            setErrorMessage("New master password must be at least 8 characters.");
             return;
         }
 
@@ -146,24 +150,27 @@ export function UnlockScreen() {
 
         setIsLoading(true);
 
-        try {
-            await resetMasterPassword(newPassword);
-            // Automatically unlocks to Dashboard
-        } catch (err: any) {
-            setErrorMessage(err?.message || "Failed to save new password.");
-        } finally {
-            setIsLoading(false);
-        }
+        setTimeout(async () => {
+            try {
+                await resetMasterPassword(newPassword);
+                // Reset completes unlock and lands in Dashboard
+            } catch (err: any) {
+                setErrorMessage(
+                    err?.message || "Failed to update Master Password.",
+                );
+                setIsLoading(false);
+            }
+        }, 50);
     }
 
-    // Render New Master Password setup view after recovery + biometric verification
+    // Step 2 of Recovery: Set a new Master Password
     if (isResettingPassword) {
         return (
             <View style={styles.container}>
-                <Text style={styles.title}>Reset Password</Text>
+                <Text style={styles.title}>Reset Master Password</Text>
                 <Text style={styles.subtitle}>
-                    Recovery authorized. Set a new Master Password for your
-                    vault.
+                    Recovery phrase and biometric authentication verified.
+                    Please choose a new Master Password for this device.
                 </Text>
 
                 {errorMessage ? (
@@ -301,85 +308,87 @@ export function UnlockScreen() {
     );
 }
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: colors.background,
-        padding: 24,
-        justifyContent: "center",
-    },
-    title: {
-        fontSize: 32,
-        fontWeight: "800",
-        color: colors.textPrimary,
-        marginBottom: 8,
-    },
-    subtitle: {
-        fontSize: 15,
-        color: colors.textSecondary,
-        marginBottom: 28,
-        lineHeight: 22,
-    },
-    errorBanner: {
-        color: colors.danger,
-        backgroundColor: colors.dangerBackground,
-        padding: 12,
-        borderRadius: 8,
-        marginBottom: 16,
-        fontSize: 14,
-        fontWeight: "600",
-    },
-    input: {
-        backgroundColor: colors.inputBackground,
-        borderWidth: 1,
-        borderColor: colors.surfaceBorder,
-        borderRadius: 8,
-        color: colors.textPrimary,
-        padding: 14,
-        marginBottom: 16,
-        fontSize: 16,
-    },
-    textArea: {
-        minHeight: 80,
-        textAlignVertical: "top",
-    },
-    primaryButton: {
-        backgroundColor: colors.primary,
-        padding: 16,
-        borderRadius: 8,
-        alignItems: "center",
-        marginTop: 8,
-        minHeight: 52,
-        justifyContent: "center",
-    },
-    biometricButton: {
-        backgroundColor: colors.cardBackground,
-        borderWidth: 1,
-        borderColor: colors.primary,
-        padding: 14,
-        borderRadius: 8,
-        alignItems: "center",
-        marginTop: 12,
-    },
-    biometricButtonText: {
-        color: colors.primary,
-        fontWeight: "700",
-        fontSize: 15,
-    },
-    buttonDisabled: {
-        opacity: 0.5,
-    },
-    buttonText: {
-        color: colors.background,
-        fontWeight: "700",
-        fontSize: 16,
-    },
-    switchButton: {
-        marginTop: 20,
-        alignItems: "center",
-    },
-    switchButtonText: {
-        color: colors.accent,
-        fontSize: 14,
-    },
-});
+function createStyles(colors: ThemeColors) {
+    return StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: colors.background,
+            padding: 24,
+            justifyContent: "center",
+        },
+        title: {
+            fontSize: 32,
+            fontWeight: "800",
+            color: colors.textPrimary,
+            marginBottom: 8,
+        },
+        subtitle: {
+            fontSize: 15,
+            color: colors.textSecondary,
+            marginBottom: 28,
+            lineHeight: 22,
+        },
+        errorBanner: {
+            color: colors.danger,
+            backgroundColor: colors.dangerBackground,
+            padding: 12,
+            borderRadius: 8,
+            marginBottom: 16,
+            fontSize: 14,
+            fontWeight: "600",
+        },
+        input: {
+            backgroundColor: colors.inputBackground,
+            borderWidth: 1,
+            borderColor: colors.surfaceBorder,
+            borderRadius: 8,
+            color: colors.textPrimary,
+            padding: 14,
+            marginBottom: 16,
+            fontSize: 16,
+        },
+        textArea: {
+            minHeight: 80,
+            textAlignVertical: "top",
+        },
+        primaryButton: {
+            backgroundColor: colors.primary,
+            padding: 16,
+            borderRadius: 8,
+            alignItems: "center",
+            marginTop: 8,
+            minHeight: 52,
+            justifyContent: "center",
+        },
+        biometricButton: {
+            backgroundColor: colors.cardBackground,
+            borderWidth: 1,
+            borderColor: colors.primary,
+            padding: 14,
+            borderRadius: 8,
+            alignItems: "center",
+            marginTop: 12,
+        },
+        biometricButtonText: {
+            color: colors.primary,
+            fontWeight: "700",
+            fontSize: 15,
+        },
+        buttonDisabled: {
+            opacity: 0.5,
+        },
+        buttonText: {
+            color: colors.background,
+            fontWeight: "700",
+            fontSize: 16,
+        },
+        switchButton: {
+            marginTop: 20,
+            alignItems: "center",
+        },
+        switchButtonText: {
+            color: colors.accent,
+            fontSize: 14,
+        },
+    });
+}
