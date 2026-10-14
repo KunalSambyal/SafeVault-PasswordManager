@@ -13,6 +13,7 @@ import {
     storeSessionDek,
 } from "../crypto";
 import { performRotationalBackup } from "./rotationalBackup";
+import { pauseAutoLock, resumeAutoLock } from "./systemActivity";
 
 export interface MigrationCredentialItem {
     identity: string;
@@ -133,14 +134,77 @@ export async function exportVaultMigration(
     );
 
     if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(filePath, {
-            mimeType: "application/json",
-            dialogTitle: "Export SafeVault Encrypted Backup",
-            UTI: "public.json",
-        });
+        pauseAutoLock();
+        try {
+            await Sharing.shareAsync(filePath, {
+                mimeType: "application/json",
+                dialogTitle: "Export SafeVault Encrypted Backup",
+                UTI: "public.json",
+            });
+        } finally {
+            resumeAutoLock();
+        }
     }
 
     return { filePath, count: items.length };
+}
+
+/**
+ * Safely reads the text content of a file selected via DocumentPicker.
+ * Handles content:// URIs and scoped permission restrictions across Expo Go and standalone builds.
+ */
+async function readPickedFileAsString(uri: string): Promise<string> {
+    const cacheDir =
+        FileSystem.cacheDirectory || FileSystem.documentDirectory || "";
+    const tempDest = `${cacheDir}safevault_import_${Date.now()}.json`;
+
+    // 1. If content:// URI, copy it to app cache first via ContentResolver streaming
+    if (uri.startsWith("content://")) {
+        try {
+            await FileSystem.copyAsync({
+                from: uri,
+                to: tempDest,
+            });
+            const content = await FileSystem.readAsStringAsync(tempDest);
+            await FileSystem.deleteAsync(tempDest, { idempotent: true }).catch(
+                () => {},
+            );
+            return content;
+        } catch {
+            // If copyAsync fails, attempt other strategies
+        }
+    }
+
+    // 2. Try direct read
+    try {
+        return await FileSystem.readAsStringAsync(uri);
+    } catch {
+        // 3. Fallback: try copying to cache if direct read failed
+        try {
+            await FileSystem.copyAsync({
+                from: uri,
+                to: tempDest,
+            });
+            const content = await FileSystem.readAsStringAsync(tempDest);
+            await FileSystem.deleteAsync(tempDest, { idempotent: true }).catch(
+                () => {},
+            );
+            return content;
+        } catch {
+            // 4. Final fallback: try fetch
+            try {
+                const response = await fetch(uri);
+                if (response.ok) {
+                    return await response.text();
+                }
+            } catch {
+                // fall through
+            }
+            throw new Error(
+                "Unable to read selected backup file. Please ensure file permissions are granted.",
+            );
+        }
+    }
 }
 
 /**
@@ -153,17 +217,27 @@ export async function pickAndDecryptMigrationFile(
         throw new Error("Backup password must be at least 8 characters.");
     }
 
-    const pickerResult = await DocumentPicker.getDocumentAsync({
-        type: ["application/json", "text/*", "*/*"],
-        copyToCacheDirectory: true,
-    });
+    pauseAutoLock();
+    let pickerResult: DocumentPicker.DocumentPickerResult;
+    try {
+        pickerResult = await DocumentPicker.getDocumentAsync({
+            type: ["application/json", "text/*", "*/*"],
+            copyToCacheDirectory: false,
+        });
+    } finally {
+        resumeAutoLock();
+    }
 
-    if (pickerResult.canceled || !pickerResult.assets || pickerResult.assets.length === 0) {
+    if (
+        pickerResult.canceled ||
+        !pickerResult.assets ||
+        pickerResult.assets.length === 0
+    ) {
         throw new Error("File selection cancelled.");
     }
 
     const selectedFileUri = pickerResult.assets[0].uri;
-    const fileContent = await FileSystem.readAsStringAsync(selectedFileUri);
+    const fileContent = await readPickedFileAsString(selectedFileUri);
 
     let container: EncryptedMigrationContainer;
     try {

@@ -7,6 +7,7 @@ import {
     StyleSheet,
     ScrollView,
     ActivityIndicator,
+    Alert,
 } from "react-native";
 import { useVault } from "../hooks/useVault";
 import { useTheme } from "../theme/ThemeContext";
@@ -74,9 +75,9 @@ export function OnboardingScreen() {
         setErrorMessage("");
 
         if (backupPassword.length < 8) {
-            setErrorMessage(
-                "Backup password must be at least 8 characters.",
-            );
+            const msg = "Backup password must be at least 8 characters.";
+            setErrorMessage(msg);
+            Alert.alert("Password Required", msg);
             return;
         }
 
@@ -89,9 +90,10 @@ export function OnboardingScreen() {
                 setImportedDate(result.exportedAt);
             } catch (err: any) {
                 if (err?.message !== "File selection cancelled.") {
-                    setErrorMessage(
-                        err?.message || "Failed to decrypt backup file.",
-                    );
+                    const message =
+                        err?.message || "Failed to decrypt backup file.";
+                    setErrorMessage(message);
+                    Alert.alert("Import Failed", message);
                 }
             } finally {
                 setIsLoading(false);

@@ -18,6 +18,8 @@ import { LabelVaultScreen } from "./src/screens/LabelVaultScreen";
 import { AddEditCredentialModal } from "./src/screens/AddEditCredentialModal";
 import { RootStackParamList } from "./src/types/navigation";
 
+import { isAutoLockPaused } from "./src/utils/systemActivity";
+
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 function AppNavigator() {
@@ -34,6 +36,10 @@ function AppNavigator() {
                     appState.current === "active" &&
                     nextAppState.match(/inactive|background/)
                 ) {
+                    if (isAutoLockPaused()) {
+                        // Do not lock while system document picker or share sheet is active
+                        return;
+                    }
                     backgroundTimestamp.current = Date.now();
                     const settings = await getAppSettings();
                     if (settings.autoLockTimeout === 0) {
@@ -45,6 +51,10 @@ function AppNavigator() {
                     appState.current.match(/inactive|background/) &&
                     nextAppState === "active"
                 ) {
+                    if (isAutoLockPaused()) {
+                        backgroundTimestamp.current = null;
+                        return;
+                    }
                     if (backgroundTimestamp.current !== null) {
                         const elapsedSeconds =
                             (Date.now() - backgroundTimestamp.current) / 1000;

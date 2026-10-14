@@ -61,7 +61,9 @@ export function ImportModal({
         }
 
         if (backupPassword.length < 8) {
-            setErrorMessage("Please enter the Backup Password (min 8 characters).");
+            const msg = "Please enter the Backup Password (min 8 characters).";
+            setErrorMessage(msg);
+            Alert.alert("Password Required", msg);
             return;
         }
 
@@ -76,7 +78,10 @@ export function ImportModal({
             } catch (err: any) {
                 setIsLoading(false);
                 if (err?.message !== "File selection cancelled.") {
-                    setErrorMessage(err?.message || "Failed to decrypt backup file.");
+                    const message =
+                        err?.message || "Failed to decrypt backup file.";
+                    setErrorMessage(message);
+                    Alert.alert("Import Failed", message);
                 }
             }
         }, 50);
