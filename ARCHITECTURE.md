@@ -28,8 +28,6 @@ SafeVault operates as an isolated on-device fortress:
 | :----------------------------- | :------------------------------------------------------------------ | :----------------------------------------------------------------------------------------- |
 | **Network Deprivation**        | Removal of `android.permission.INTERNET` and `ACCESS_NETWORK_STATE` | Completely eliminates remote exfiltration risks at the OS kernel level.                    |
 | **Display Protection**         | Window manager `FLAG_SECURE` attribute on root Android Activity     | Prevents OS screenshots, screen capture utilities, and task switcher preview leaks.        |
-| **Clipboard Privacy**          | `ClipDescription.EXTRA_IS_SENSITIVE` flag on clipboard payloads     | Prevents Android 13+ from displaying copied passwords in persistent system overlays.       |
-| **Clipboard Scrubbing**        | Automated 30-second background purge timer                          | Clears plaintext passwords from system memory to prevent inspection by subsequent apps.    |
 | **App Lifecycle Lock**         | React Native `AppState` change listener                             | Instantly locks the vault when the application enters `background` or `inactive` state.    |
 | **Device Architecture Filter** | `reactNativeArchitectures=armeabi-v7a,arm64-v8a` in Gradle          | Eliminates x86/x86_64 emulator binaries to reduce standalone APK size from ~85MB to ~30MB. |
 
@@ -189,7 +187,7 @@ Navigation Root
 
 - **Actions:**
     - `View`: Biometric challenge. On success, decrypts password and begins a 30-second reveal countdown. At 0s, auto-masks back to bullets.
-    - `Copy`: Biometric challenge. On success, decrypts, copies to clipboard with `EXTRA_IS_SENSITIVE`, and starts a 30-second clipboard wipe timer.
+    - `Copy`: Biometric challenge. On success, decrypts and copies password to the system clipboard.
     - `Edit`: Opens AddEditModal populated with decrypted credential data.
     - `Delete`: Biometric challenge followed by a native confirmation alert before deleting the record.
 
@@ -255,7 +253,7 @@ export interface ThemeColors {
 - `dangerBackground`: `#331219` (Tinted container for warnings)
 - `inputBackground`: `#1f1b2b` (Deep input field fill)
 
-#### Light Theme Tokens (Planned)
+#### Light Theme Tokens (Implemented)
 
 - `background`: `#fcfbf7` (Warm light paper)
 - `surface`: `#f4f2ea` (Slightly shaded container surface)
@@ -273,7 +271,7 @@ export interface ThemeColors {
 
 ---
 
-## 7. Architecture for Backup & Migration (Upcoming Phase 6)
+## 7. Architecture for Backup & Migration (Implemented in v1.2.0)
 
 ### A. Local Grandfather-Father-Son (GFS) 4-File Rotation
 

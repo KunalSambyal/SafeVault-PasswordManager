@@ -6,9 +6,9 @@ SafeVault is an ultra-secure, zero-knowledge, offline-first credential vault bui
 
 ## 1. Project Overview & Release Status
 
-### Current Milestone: Beta Release (v1.0.0-beta)
+### Current Milestone: Beta Release (v1.2.0-beta)
 
-The core cryptographic engine, secure database layer, primary user interfaces, biometric access controls, and operating system isolations are fully implemented, tested, and bundled into a standalone Android APK.
+The core cryptographic engine, secure database layer, primary user interfaces, biometric access controls, GFS rotational backup, cross-device encrypted migration, and settings panel are fully implemented, tested, and bundled into a standalone Android APK.
 
 ### Release Characteristics
 
@@ -52,7 +52,6 @@ The core cryptographic engine, secure database layer, primary user interfaces, b
 - **Launch Verification:** Biometric authentication challenge (fingerprint, face, or device PIN) on app startup.
 - **Step-Up Authentication:** Biometric verification required prior to viewing, copying, editing, or deleting any credential.
 - **Temporary Reveal Timer:** Decrypted passwords displayed with a 30-second countdown before automatically reverting to masked bullets (`••••••••`).
-- **Sensitive Clipboard Scrubbing:** Copies credentials tagged with `ClipDescription.EXTRA_IS_SENSITIVE` to suppress Android 13+ floating previews, backed by a 30-second automated clipboard purge timer.
 - **Lifecycle Auto-Lock:** Monitors Android `AppState` transitions; locks the vault immediately upon backgrounding or app switching.
 
 ### Phase 5: Password Generator & Health
@@ -96,8 +95,6 @@ The following capabilities are scheduled for subsequent releases following beta 
 
 1. **Security Preferences:**
     - Configurable auto-lock timeout (immediate, 1 minute, 5 minutes, 15 minutes).
-    - Biometric toggle (enable or disable biometric unlock while keeping master password active).
-    - Clipboard wipe timer adjustments (15s, 30s, 60s).
 2. **Appearance & Customization:**
     - Light theme option with automated system theme matching.
 3. **Vault Health Audit:**
@@ -112,9 +109,9 @@ The following capabilities are scheduled for subsequent releases following beta 
 
 ## 4. Engineering Milestones
 
-| Milestone       | Target Scope                                                             | Status                                  |
-| :-------------- | :----------------------------------------------------------------------- | :-------------------------------------- |
-| **v1.0.0-beta** | Core crypto, database, full CRUD, biometrics, generator, sidebar UI, APK | **Completed**                           |
-| **v1.1.0**      | GFS rotational backup, encrypted migration JSON export/import (hybrid)   | **Implemented (Feature Branch)**        |
-| **v1.2.0**      | Settings panel, configurable timers, theme switching, offline user guide | **Implemented (Feature Branch)**        |
-| **v1.3.0**      | Vault health audit, custom field types, database export verification     | Planned                                 |
+| Milestone       | Target Scope                                                                | Status        |
+| :-------------- | :-------------------------------------------------------------------------- | :------------ |
+| **v1.0.0-beta** | Core crypto, database, full CRUD, biometrics, generator, sidebar UI, APK    | **Completed** |
+| **v1.1.0**      | GFS rotational backup, encrypted migration JSON export/import (hybrid)      | **Completed** |
+| **v1.2.0-beta** | Settings panel, configurable auto-lock, theme switching, offline user guide | **Completed** |
+| **v1.3.0**      | Vault health audit, custom field types, database export verification        | Planned       |
