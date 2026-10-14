@@ -66,7 +66,7 @@ export function ExportModal({ visible, onClose, dek }: ExportModalProps) {
                 handleClose();
                 Alert.alert(
                     "Export Successful",
-                    `Exported ${result.count} credentials into an AES-256-GCM encrypted backup container.`,
+                    `Exported ${result.count} credentials into a secure encrypted backup file.`,
                 );
             } catch (err: any) {
                 setIsLoading(false);
@@ -132,10 +132,9 @@ export function ExportModal({ visible, onClose, dek }: ExportModalProps) {
                                 { color: colors.textSecondary },
                             ]}
                         >
-                            Create a portable AES-256-GCM encrypted JSON migration
-                            container. You will need this Backup Password to
-                            decrypt and restore your credentials on another
-                            device.
+                            Create a portable secure encrypted backup file.
+                            You will need this Backup Password to decrypt
+                            and restore your credentials on another device.
                         </Text>
 
                         {errorMessage ? (

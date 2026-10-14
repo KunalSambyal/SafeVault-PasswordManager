@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
     View,
     Text,
@@ -7,7 +7,7 @@ import {
     StyleSheet,
     Alert,
 } from "react-native";
-import { RouteProp } from "@react-navigation/native";
+import { RouteProp, useFocusEffect } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useVault } from "../hooks/useVault";
 import { useTheme } from "../theme/ThemeContext";
@@ -41,9 +41,13 @@ export function LabelVaultScreen({
 
     const styles = useMemo(() => createStyles(colors), [colors]);
 
-    useEffect(() => {
-        loadItems();
-    }, [identity]);
+    useFocusEffect(
+        useCallback(() => {
+            void loadItems();
+            setRevealedPasswords({});
+            setTimers({});
+        }, [identity])
+    );
 
     useEffect(() => {
         const interval = setInterval(() => {

@@ -322,8 +322,7 @@ export function SidebarDrawer({
                                         </Text>
                                         <Text style={styles.infoLine}>
                                             2. Zero Knowledge: Encrypted locally
-                                            using AES-256-GCM derived from your
-                                            Master Password.
+                                            using your Master Password.
                                         </Text>
                                         <Text style={styles.infoLine}>
                                             3. Verifiable: Open source codebase
