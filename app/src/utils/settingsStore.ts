@@ -1,12 +1,10 @@
 import * as SecureStore from "expo-secure-store";
 
 export type AutoLockTimeout = 0 | 60 | 300 | 900;
-export type ClipboardTimeout = 15 | 30 | 60;
 export type ThemePreference = "dark" | "light";
 
 export interface AppSettings {
     autoLockTimeout: AutoLockTimeout;
-    clipboardTimeout: ClipboardTimeout;
     theme: ThemePreference;
 }
 
@@ -14,7 +12,6 @@ const SETTINGS_KEY = "safevault_user_settings";
 
 const DEFAULT_SETTINGS: AppSettings = {
     autoLockTimeout: 0,
-    clipboardTimeout: 30,
     theme: "dark",
 };
 
@@ -34,10 +31,6 @@ export async function getAppSettings(): Promise<AppSettings> {
                     typeof parsed.autoLockTimeout === "number"
                         ? parsed.autoLockTimeout
                         : DEFAULT_SETTINGS.autoLockTimeout,
-                clipboardTimeout:
-                    typeof parsed.clipboardTimeout === "number"
-                        ? parsed.clipboardTimeout
-                        : DEFAULT_SETTINGS.clipboardTimeout,
                 theme:
                     parsed.theme === "light" || parsed.theme === "dark"
                         ? parsed.theme

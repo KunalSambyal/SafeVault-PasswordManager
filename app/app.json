@@ -29,7 +29,6 @@
             "expo-local-authentication",
             "./plugins/withFlagSecure.js",
             "./plugins/withArchitectureFilter.js",
-            "./plugins/withSensitiveClipboard.js",
             "expo-sharing"
         ],
         "extra": {

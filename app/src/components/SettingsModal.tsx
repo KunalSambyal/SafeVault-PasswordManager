@@ -14,7 +14,6 @@ import {
     getAppSettings,
     saveAppSettings,
     AutoLockTimeout,
-    ClipboardTimeout,
     AppSettings,
 } from "../utils/settingsStore";
 import {
@@ -35,12 +34,6 @@ const AUTO_LOCK_OPTIONS: { label: string; value: AutoLockTimeout }[] = [
     { label: "1 min", value: 60 },
     { label: "5 min", value: 300 },
     { label: "15 min", value: 900 },
-];
-
-const CLIPBOARD_OPTIONS: { label: string; value: ClipboardTimeout }[] = [
-    { label: "15s", value: 15 },
-    { label: "30s", value: 30 },
-    { label: "60s", value: 60 },
 ];
 
 export function SettingsModal({
@@ -77,12 +70,6 @@ export function SettingsModal({
     async function handleAutoLockChange(timeout: AutoLockTimeout) {
         if (!settings) return;
         const updated = await saveAppSettings({ autoLockTimeout: timeout });
-        setSettings(updated);
-    }
-
-    async function handleClipboardTimeoutChange(seconds: ClipboardTimeout) {
-        if (!settings) return;
-        const updated = await saveAppSettings({ clipboardTimeout: seconds });
         setSettings(updated);
     }
 
@@ -361,79 +348,6 @@ export function SettingsModal({
                                                         style={[
                                                             styles.optionPillText,
                                                             settings?.autoLockTimeout ===
-                                                            opt.value
-                                                                ? {
-                                                                      color: colors.background,
-                                                                      fontWeight:
-                                                                          "700",
-                                                                  }
-                                                                : {
-                                                                      color: colors.textSecondary,
-                                                                  },
-                                                        ]}
-                                                    >
-                                                        {opt.label}
-                                                    </Text>
-                                                </TouchableOpacity>
-                                            ))}
-                                        </View>
-                                    </View>
-
-                                    {/* Clipboard Wipe */}
-                                    <View
-                                        style={[
-                                            styles.card,
-                                            {
-                                                backgroundColor:
-                                                    colors.cardBackground,
-                                                borderColor:
-                                                    colors.surfaceBorder,
-                                                marginBottom: 10,
-                                            },
-                                        ]}
-                                    >
-                                        <Text
-                                            style={[
-                                                styles.rowLabel,
-                                                { color: colors.textPrimary },
-                                            ]}
-                                        >
-                                            Clipboard Scrub Timer
-                                        </Text>
-                                        <Text
-                                            style={[
-                                                styles.rowHint,
-                                                { color: colors.textSecondary },
-                                            ]}
-                                        >
-                                            Clears copied passwords from memory
-                                        </Text>
-                                        <View style={styles.optionsRow}>
-                                            {CLIPBOARD_OPTIONS.map((opt) => (
-                                                <TouchableOpacity
-                                                    key={opt.value}
-                                                    style={[
-                                                        styles.optionPill,
-                                                        {
-                                                            borderColor:
-                                                                colors.surfaceBorder,
-                                                            backgroundColor:
-                                                                settings?.clipboardTimeout ===
-                                                                opt.value
-                                                                    ? colors.primary
-                                                                    : colors.inputBackground,
-                                                        },
-                                                    ]}
-                                                    onPress={() =>
-                                                        handleClipboardTimeoutChange(
-                                                            opt.value,
-                                                        )
-                                                    }
-                                                >
-                                                    <Text
-                                                        style={[
-                                                            styles.optionPillText,
-                                                            settings?.clipboardTimeout ===
                                                             opt.value
                                                                 ? {
                                                                       color: colors.background,

@@ -15,8 +15,7 @@ import { ThemeColors } from "../theme/colors";
 import { getCredentialsByIdentity, deleteCredential } from "../db";
 import { decryptAESGCM } from "../crypto";
 import { authenticateWithBiometrics } from "../utils/biometrics";
-import { copySecureString } from "../utils/clipboard";
-import { getAppSettings } from "../utils/settingsStore";
+import { copyToClipboard } from "../utils/clipboard";
 import { CredentialRecord } from "../types/database";
 import { RootStackParamList } from "../types/navigation";
 
@@ -151,14 +150,8 @@ export function LabelVaultScreen({
                 dek,
             );
 
-            const settings = await getAppSettings();
-            const timeoutSeconds = settings.clipboardTimeout || 30;
-
-            await copySecureString(plaintext, timeoutSeconds);
-            Alert.alert(
-                "Copied",
-                `Password copied. Clipboard will clear automatically in ${timeoutSeconds} seconds.`,
-            );
+            await copyToClipboard(plaintext);
+            Alert.alert("Copied", "Password copied to clipboard.");
         } catch {
             Alert.alert("Error", "Failed to copy password.");
         }
