@@ -159,7 +159,7 @@ export function ImportModal({
                                     { color: colors.textSecondary },
                                 ]}
                             >
-                                [X]
+                                ✕
                             </Text>
                         </TouchableOpacity>
                     </View>
@@ -457,7 +457,7 @@ const styles = StyleSheet.create({
         padding: 4,
     },
     closeButtonText: {
-        fontSize: 14,
+        fontSize: 18,
         fontWeight: "600",
     },
     body: {

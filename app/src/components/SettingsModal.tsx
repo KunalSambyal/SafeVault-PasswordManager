@@ -6,7 +6,6 @@ import {
     TouchableOpacity,
     StyleSheet,
     ScrollView,
-    Switch,
     Alert,
     ActivityIndicator,
 } from "react-native";
@@ -24,8 +23,6 @@ import {
     restoreRotationalBackup,
     BackupSlotInfo,
 } from "../utils/rotationalBackup";
-import { isBiometricsAvailable } from "../utils/biometrics";
-import { getDatabase } from "../db/connection";
 
 interface SettingsModalProps {
     visible: boolean;
@@ -53,7 +50,6 @@ export function SettingsModal({
 }: SettingsModalProps) {
     const { colors, theme, setTheme } = useTheme();
     const [settings, setSettings] = useState<AppSettings | null>(null);
-    const [hasBiometricsHardware, setHasBiometricsHardware] = useState(false);
     const [backups, setBackups] = useState<BackupSlotInfo[]>([]);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -68,9 +64,6 @@ export function SettingsModal({
         try {
             const currentSettings = await getAppSettings();
             setSettings(currentSettings);
-
-            const bioAvailable = await isBiometricsAvailable();
-            setHasBiometricsHardware(bioAvailable);
 
             const backupList = await listRotationalBackups();
             setBackups(backupList);
@@ -91,28 +84,6 @@ export function SettingsModal({
         if (!settings) return;
         const updated = await saveAppSettings({ clipboardTimeout: seconds });
         setSettings(updated);
-    }
-
-    async function handleBiometricsToggle(enabled: boolean) {
-        if (!settings) return;
-        try {
-            const updated = await saveAppSettings({
-                biometricsEnabled: enabled,
-            });
-            setSettings(updated);
-
-            // Also synchronize with SQLite metadata
-            const db = await getDatabase();
-            await db.runAsync(
-                "UPDATE vault_metadata SET is_biometric_enabled = ? WHERE id = 1;",
-                [enabled ? 1 : 0],
-            );
-        } catch {
-            Alert.alert(
-                "Error",
-                "Failed to update biometric unlock preference.",
-            );
-        }
     }
 
     async function handleThemeChange(newTheme: "dark" | "light") {
@@ -212,7 +183,7 @@ export function SettingsModal({
                                     { color: colors.textSecondary },
                                 ]}
                             >
-                                [X]
+                                ✕
                             </Text>
                         </TouchableOpacity>
                     </View>
@@ -480,60 +451,6 @@ export function SettingsModal({
                                             ))}
                                         </View>
                                     </View>
-
-                                    {/* Biometrics Toggle */}
-                                    {hasBiometricsHardware && (
-                                        <View
-                                            style={[
-                                                styles.card,
-                                                styles.switchRow,
-                                                {
-                                                    backgroundColor:
-                                                        colors.cardBackground,
-                                                    borderColor:
-                                                        colors.surfaceBorder,
-                                                },
-                                            ]}
-                                        >
-                                            <View style={{ flex: 1, paddingRight: 10 }}>
-                                                <Text
-                                                    style={[
-                                                        styles.rowLabel,
-                                                        {
-                                                            color: colors.textPrimary,
-                                                        },
-                                                    ]}
-                                                >
-                                                    Biometric Quick Unlock
-                                                </Text>
-                                                <Text
-                                                    style={[
-                                                        styles.rowHint,
-                                                        {
-                                                            color: colors.textSecondary,
-                                                        },
-                                                    ]}
-                                                >
-                                                    Allow fingerprint or device PIN
-                                                    on startup
-                                                </Text>
-                                            </View>
-                                            <Switch
-                                                value={
-                                                    settings?.biometricsEnabled ??
-                                                    true
-                                                }
-                                                onValueChange={
-                                                    handleBiometricsToggle
-                                                }
-                                                trackColor={{
-                                                    false: colors.surfaceBorder,
-                                                    true: colors.primary,
-                                                }}
-                                                thumbColor={colors.background}
-                                            />
-                                        </View>
-                                    )}
                                 </View>
 
                                 {/* 3. GFS Rotational Backups */}
@@ -709,7 +626,7 @@ const styles = StyleSheet.create({
         padding: 4,
     },
     closeButtonText: {
-        fontSize: 14,
+        fontSize: 18,
         fontWeight: "600",
     },
     body: {

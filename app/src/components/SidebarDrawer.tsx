@@ -139,7 +139,7 @@ export function SidebarDrawer({
                             onPress={handleClose}
                             accessibilityLabel="Close menu"
                         >
-                            <Text style={styles.closeButtonText}>[X]</Text>
+                            <Text style={styles.closeButtonText}>✕</Text>
                         </TouchableOpacity>
                     </View>
 
@@ -356,7 +356,7 @@ export function SidebarDrawer({
                             </Text>
                             <View style={styles.infoCard}>
                                 <Text style={styles.infoCardTitle}>
-                                    Beta Testing (v1.0.0-beta)
+                                    Beta Testing (v1.2.0)
                                 </Text>
                                 <Text style={styles.warningLine}>
                                     Notice: SafeVault is an offline tool. Always keep
@@ -464,7 +464,7 @@ function createStyles(colors: ThemeColors) {
             paddingVertical: 4,
         },
         closeButtonText: {
-            fontSize: 14,
+            fontSize: 20,
             color: colors.textSecondary,
             fontWeight: "600",
         },
