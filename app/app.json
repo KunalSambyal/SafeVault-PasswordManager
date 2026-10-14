@@ -8,12 +8,16 @@
         "userInterfaceStyle": "dark",
         "android": {
             "package": "com.safevault.app",
+            "versionCode": 2,
             "adaptiveIcon": {
                 "backgroundColor": "#0a090d",
                 "foregroundImage": "./assets/android-icon-foreground.png"
             },
             "predictiveBackGestureEnabled": false,
-            "permissions": [],
+            "permissions": [
+                "android.permission.USE_BIOMETRIC",
+                "android.permission.USE_FINGERPRINT"
+            ],
             "blockedPermissions": [
                 "android.permission.INTERNET",
                 "android.permission.ACCESS_NETWORK_STATE"
@@ -22,6 +26,7 @@
         "plugins": [
             "expo-secure-store",
             "expo-sqlite",
+            "expo-local-authentication",
             "./plugins/withFlagSecure.js",
             "./plugins/withArchitectureFilter.js",
             "./plugins/withSensitiveClipboard.js",

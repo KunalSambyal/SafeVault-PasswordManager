@@ -7,7 +7,6 @@ export type ThemePreference = "dark" | "light";
 export interface AppSettings {
     autoLockTimeout: AutoLockTimeout;
     clipboardTimeout: ClipboardTimeout;
-    biometricsEnabled: boolean;
     theme: ThemePreference;
 }
 
@@ -16,7 +15,6 @@ const SETTINGS_KEY = "safevault_user_settings";
 const DEFAULT_SETTINGS: AppSettings = {
     autoLockTimeout: 0,
     clipboardTimeout: 30,
-    biometricsEnabled: true,
     theme: "dark",
 };
 
@@ -40,10 +38,6 @@ export async function getAppSettings(): Promise<AppSettings> {
                     typeof parsed.clipboardTimeout === "number"
                         ? parsed.clipboardTimeout
                         : DEFAULT_SETTINGS.clipboardTimeout,
-                biometricsEnabled:
-                    typeof parsed.biometricsEnabled === "boolean"
-                        ? parsed.biometricsEnabled
-                        : DEFAULT_SETTINGS.biometricsEnabled,
                 theme:
                     parsed.theme === "light" || parsed.theme === "dark"
                         ? parsed.theme

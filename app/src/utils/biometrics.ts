@@ -1,9 +1,17 @@
 import * as LocalAuthentication from "expo-local-authentication";
 
 export async function isBiometricsAvailable(): Promise<boolean> {
-    const hasHardware = await LocalAuthentication.hasHardwareAsync();
-    const isEnrolled = await LocalAuthentication.isEnrolledAsync();
-    return hasHardware && isEnrolled;
+    try {
+        const hasHardware = await LocalAuthentication.hasHardwareAsync();
+        const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+        if (hasHardware && isEnrolled) {
+            return true;
+        }
+        const level = await LocalAuthentication.getEnrolledLevelAsync();
+        return level > 0;
+    } catch {
+        return false;
+    }
 }
 
 export async function authenticateWithBiometrics(

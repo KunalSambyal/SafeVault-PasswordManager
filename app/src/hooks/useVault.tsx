@@ -143,9 +143,7 @@ export function VaultProvider({ children }: { children: ReactNode }) {
                 tag: meta.dek_tag,
             });
 
-            storeSessionDek(unlockedDek).catch((err) =>
-                console.warn("Background keystore cache error", err),
-            );
+            await storeSessionDek(unlockedDek);
 
             setDek(unlockedDek);
             setIsUnlocked(true);
@@ -170,9 +168,7 @@ export function VaultProvider({ children }: { children: ReactNode }) {
                 tag: meta.recovery_tag,
             });
 
-            storeSessionDek(unlockedDek).catch((err) =>
-                console.warn("Background keystore cache error", err),
-            );
+            await storeSessionDek(unlockedDek);
 
             setDek(unlockedDek);
             setIsUnlocked(true);
