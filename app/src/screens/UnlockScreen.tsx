@@ -15,7 +15,6 @@ import {
     isBiometricsAvailable,
 } from "../utils/biometrics";
 import { getSessionDek } from "../crypto";
-import { getAppSettings } from "../utils/settingsStore";
 
 export function UnlockScreen() {
     const {
@@ -47,25 +46,35 @@ export function UnlockScreen() {
 
     async function checkBiometrics() {
         const available = await isBiometricsAvailable();
-        const cachedDek = await getSessionDek();
-        const settings = await getAppSettings();
-        setHasBiometrics(
-            available && cachedDek !== null && settings.biometricsEnabled,
-        );
+        setHasBiometrics(available);
     }
 
     async function handleBiometricUnlock() {
         setIsLoading(true);
         setErrorMessage("");
-        const success = await authenticateWithBiometrics("Unlock SafeVault");
-        if (success) {
-            const ok = await unlockWithBiometricSession();
-            if (ok) {
+        try {
+            const cachedDek = await getSessionDek();
+            if (!cachedDek) {
+                setErrorMessage(
+                    "Please enter your Master Password once to activate biometric unlock on this device.",
+                );
                 setIsLoading(false);
                 return;
             }
+
+            const success = await authenticateWithBiometrics("Unlock SafeVault");
+            if (success) {
+                const ok = await unlockWithBiometricSession();
+                if (ok) {
+                    setIsLoading(false);
+                    return;
+                }
+            }
+        } catch {
+            // Cancelled or dismissed
+        } finally {
+            setIsLoading(false);
         }
-        setIsLoading(false);
     }
 
     function handleUnlock() {
