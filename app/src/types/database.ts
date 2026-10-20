@@ -7,7 +7,6 @@ export interface VaultMetadata {
     recovery_encrypted_dek: string;
     recovery_iv: string;
     recovery_tag: string;
-    is_biometric_enabled: number;
     created_at: number;
 }
 

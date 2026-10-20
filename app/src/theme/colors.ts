@@ -29,7 +29,6 @@ export const darkColors: ThemeColors = {
     dangerBackground: "#331219",
     inputBackground: "#1f1b2b",
 };
-
 export const lightColors: ThemeColors = {
     background: "#fcfbf7",
     surface: "#f4f2ea",
@@ -45,5 +44,3 @@ export const lightColors: ThemeColors = {
     dangerBackground: "#ffe4e6",
     inputBackground: "#f5f3eb",
 };
-
-export const colors = darkColors;

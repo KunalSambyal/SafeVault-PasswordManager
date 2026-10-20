@@ -8,7 +8,6 @@ CREATE TABLE IF NOT EXISTS vault_metadata (
   recovery_encrypted_dek TEXT NOT NULL,
   recovery_iv TEXT NOT NULL,
   recovery_tag TEXT NOT NULL,
-  is_biometric_enabled INTEGER DEFAULT 0,
   created_at INTEGER NOT NULL
 );
 `;

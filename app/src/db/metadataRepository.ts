@@ -1,5 +1,24 @@
 import { getDatabase } from "./connection";
 import { VaultMetadata } from "../types/database";
+import { EnvelopeMetadata } from "../types/crypto";
+
+export type VaultMetadataInput = Omit<VaultMetadata, "id">;
+
+export function createVaultMetadataFromEnvelope(
+    envelope: EnvelopeMetadata,
+    createdAt = Math.floor(Date.now() / 1000),
+): VaultMetadataInput {
+    return {
+        salt: envelope.salt,
+        encrypted_dek: envelope.encryptedDek.ciphertext,
+        dek_iv: envelope.encryptedDek.iv,
+        dek_tag: envelope.encryptedDek.tag,
+        recovery_encrypted_dek: envelope.recoveryEncryptedDek.ciphertext,
+        recovery_iv: envelope.recoveryEncryptedDek.iv,
+        recovery_tag: envelope.recoveryEncryptedDek.tag,
+        created_at: createdAt,
+    };
+}
 
 export async function getVaultMetadata(): Promise<VaultMetadata | null> {
     const db = await getDatabase();
@@ -13,7 +32,7 @@ export async function isVaultInitialized(): Promise<boolean> {
 }
 
 export async function initializeVaultMetadata(
-    metadata: Omit<VaultMetadata, "id">,
+    metadata: VaultMetadataInput,
 ): Promise<void> {
     const db = await getDatabase();
     const query = `
@@ -26,9 +45,8 @@ export async function initializeVaultMetadata(
           recovery_encrypted_dek,
           recovery_iv,
           recovery_tag,
-          is_biometric_enabled,
           created_at
-        ) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        ) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?);
       `;
     await db.runAsync(query, [
         metadata.salt,
@@ -38,7 +56,6 @@ export async function initializeVaultMetadata(
         metadata.recovery_encrypted_dek,
         metadata.recovery_iv,
         metadata.recovery_tag,
-        metadata.is_biometric_enabled,
         metadata.created_at,
     ]);
 }

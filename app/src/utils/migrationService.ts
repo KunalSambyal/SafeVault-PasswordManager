@@ -3,7 +3,10 @@ import * as Sharing from "expo-sharing";
 import * as DocumentPicker from "expo-document-picker";
 import { getAllCredentials } from "../db/credentialsRepository";
 import { getDatabase } from "../db/connection";
-import { initializeVaultMetadata } from "../db/metadataRepository";
+import {
+    createVaultMetadataFromEnvelope,
+    initializeVaultMetadata,
+} from "../db/metadataRepository";
 import {
     encryptAESGCM,
     decryptAESGCM,
@@ -48,6 +51,29 @@ export interface EncryptedMigrationContainer {
 }
 
 const PBKDF2_MIGRATION_ITERATIONS = 10000;
+
+type MigrationDatabase = Awaited<ReturnType<typeof getDatabase>>;
+
+async function insertMigrationCredential(
+    db: MigrationDatabase,
+    item: MigrationCredentialItem,
+    encrypted: ReturnType<typeof encryptAESGCM>,
+    now: number,
+): Promise<void> {
+    await db.runAsync(
+        `INSERT INTO credentials (identity, label, encrypted_password, iv, auth_tag, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?);`,
+        [
+            item.identity.trim(),
+            item.label.trim(),
+            encrypted.ciphertext,
+            encrypted.iv,
+            encrypted.tag,
+            item.createdAt || now,
+            item.updatedAt || now,
+        ],
+    );
+}
 
 /**
  * Exports all credentials as an AES-256-GCM encrypted JSON migration container.
@@ -312,19 +338,7 @@ export async function applyMigrationToExistingVault(
         for (const item of items) {
             const encrypted = encryptAESGCM(item.password, dek);
             const now = Math.floor(Date.now() / 1000);
-            await db.runAsync(
-                `INSERT INTO credentials (identity, label, encrypted_password, iv, auth_tag, created_at, updated_at)
-                 VALUES (?, ?, ?, ?, ?, ?, ?);`,
-                [
-                    item.identity.trim(),
-                    item.label.trim(),
-                    encrypted.ciphertext,
-                    encrypted.iv,
-                    encrypted.tag,
-                    item.createdAt || now,
-                    item.updatedAt || now,
-                ],
-            );
+            await insertMigrationCredential(db, item, encrypted, now);
             importedCount++;
         }
     } else {
@@ -353,19 +367,7 @@ export async function applyMigrationToExistingVault(
                 );
                 updatedCount++;
             } else {
-                await db.runAsync(
-                    `INSERT INTO credentials (identity, label, encrypted_password, iv, auth_tag, created_at, updated_at)
-                     VALUES (?, ?, ?, ?, ?, ?, ?);`,
-                    [
-                        item.identity.trim(),
-                        item.label.trim(),
-                        encrypted.ciphertext,
-                        encrypted.iv,
-                        encrypted.tag,
-                        item.createdAt || now,
-                        item.updatedAt || now,
-                    ],
-                );
+                await insertMigrationCredential(db, item, encrypted, now);
                 importedCount++;
             }
         }
@@ -384,17 +386,7 @@ export async function initializeVaultFromMigration(
 ): Promise<{ mnemonic: string; dek: Uint8Array; count: number }> {
     const { metadata, dek } = initializeEnvelope(newMasterPassword);
 
-    await initializeVaultMetadata({
-        salt: metadata.salt,
-        encrypted_dek: metadata.encryptedDek.ciphertext,
-        dek_iv: metadata.encryptedDek.iv,
-        dek_tag: metadata.encryptedDek.tag,
-        recovery_encrypted_dek: metadata.recoveryEncryptedDek.ciphertext,
-        recovery_iv: metadata.recoveryEncryptedDek.iv,
-        recovery_tag: metadata.recoveryEncryptedDek.tag,
-        is_biometric_enabled: 1,
-        created_at: Math.floor(Date.now() / 1000),
-    });
+    await initializeVaultMetadata(createVaultMetadataFromEnvelope(metadata));
 
     await storeSessionDek(dek);
 
@@ -406,19 +398,7 @@ export async function initializeVaultFromMigration(
 
     for (const item of items) {
         const encrypted = encryptAESGCM(item.password, dek);
-        await db.runAsync(
-            `INSERT INTO credentials (identity, label, encrypted_password, iv, auth_tag, created_at, updated_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?);`,
-            [
-                item.identity.trim(),
-                item.label.trim(),
-                encrypted.ciphertext,
-                encrypted.iv,
-                encrypted.tag,
-                item.createdAt || now,
-                item.updatedAt || now,
-            ],
-        );
+        await insertMigrationCredential(db, item, encrypted, now);
         count++;
     }
 

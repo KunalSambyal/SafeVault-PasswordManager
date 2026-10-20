@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import {
-    Modal,
     View,
     Text,
     TextInput,
@@ -12,6 +11,7 @@ import {
 } from "react-native";
 import { useTheme } from "../theme/ThemeContext";
 import { exportVaultMigration } from "../utils/migrationService";
+import { ModalFrame } from "./ModalFrame";
 
 interface ExportModalProps {
     visible: boolean;
@@ -58,41 +58,27 @@ export function ExportModal({ visible, onClose, dek }: ExportModalProps) {
 
         setIsLoading(true);
 
-        // Run asynchronously so UI reflects loader
-        setTimeout(async () => {
-            try {
-                const result = await exportVaultMigration(backupPassword, dek);
-                setIsLoading(false);
-                handleClose();
-                Alert.alert(
-                    "Export Successful",
-                    `Exported ${result.count} credentials into a secure encrypted backup file.`,
-                );
-            } catch (err: any) {
-                setIsLoading(false);
-                setErrorMessage(err?.message || "Failed to export vault backup.");
-            }
-        }, 50);
+        try {
+            const result = await exportVaultMigration(backupPassword, dek);
+            setIsLoading(false);
+            handleClose();
+            Alert.alert(
+                "Export Successful",
+                `Exported ${result.count} credentials into a secure encrypted backup file.`,
+            );
+        } catch (err: any) {
+            setIsLoading(false);
+            setErrorMessage(err?.message || "Failed to export vault backup.");
+        }
     }
 
     return (
-        <Modal
+        <ModalFrame
             visible={visible}
-            transparent
-            animationType="slide"
-            onRequestClose={handleClose}
+            onClose={handleClose}
+            overlayPadding={20}
         >
-            <View style={styles.overlay}>
-                <View
-                    style={[
-                        styles.container,
-                        {
-                            backgroundColor: colors.surface,
-                            borderColor: colors.surfaceBorder,
-                        },
-                    ]}
-                >
-                    <View
+            <View
                         style={[
                             styles.header,
                             { borderBottomColor: colors.surfaceBorder },
@@ -281,28 +267,12 @@ export function ExportModal({ visible, onClose, dek }: ExportModalProps) {
                                 )}
                             </TouchableOpacity>
                         </View>
-                    </ScrollView>
-                </View>
-            </View>
-        </Modal>
+            </ScrollView>
+        </ModalFrame>
     );
 }
 
 const styles = StyleSheet.create({
-    overlay: {
-        flex: 1,
-        backgroundColor: "rgba(0, 0, 0, 0.75)",
-        justifyContent: "center",
-        alignItems: "center",
-        padding: 20,
-    },
-    container: {
-        width: "100%",
-        maxHeight: "90%",
-        borderRadius: 12,
-        borderWidth: 1,
-        overflow: "hidden",
-    },
     header: {
         flexDirection: "row",
         justifyContent: "space-between",

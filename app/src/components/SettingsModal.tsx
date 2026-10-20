@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import {
-    Modal,
     View,
     Text,
     TouchableOpacity,
@@ -22,6 +21,7 @@ import {
     restoreRotationalBackup,
     BackupSlotInfo,
 } from "../utils/rotationalBackup";
+import { ModalFrame } from "./ModalFrame";
 
 interface SettingsModalProps {
     visible: boolean;
@@ -130,23 +130,11 @@ export function SettingsModal({
     }
 
     return (
-        <Modal
+        <ModalFrame
             visible={visible}
-            transparent
-            animationType="slide"
-            onRequestClose={onClose}
+            onClose={onClose}
         >
-            <View style={styles.overlay}>
-                <View
-                    style={[
-                        styles.container,
-                        {
-                            backgroundColor: colors.surface,
-                            borderColor: colors.surfaceBorder,
-                        },
-                    ]}
-                >
-                    <View
+            <View
                         style={[
                             styles.header,
                             { borderBottomColor: colors.surfaceBorder },
@@ -502,28 +490,12 @@ export function SettingsModal({
                                 </View>
                             </>
                         )}
-                    </ScrollView>
-                </View>
-            </View>
-        </Modal>
+            </ScrollView>
+        </ModalFrame>
     );
 }
 
 const styles = StyleSheet.create({
-    overlay: {
-        flex: 1,
-        backgroundColor: "rgba(0, 0, 0, 0.75)",
-        justifyContent: "center",
-        alignItems: "center",
-        padding: 16,
-    },
-    container: {
-        width: "100%",
-        maxHeight: "90%",
-        borderRadius: 12,
-        borderWidth: 1,
-        overflow: "hidden",
-    },
     header: {
         flexDirection: "row",
         justifyContent: "space-between",

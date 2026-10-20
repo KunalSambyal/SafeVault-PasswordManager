@@ -9,6 +9,7 @@ import {
     isVaultInitialized,
     getVaultMetadata,
     initializeVaultMetadata,
+    createVaultMetadataFromEnvelope,
     getIdentitiesWithCounts,
 } from "../db";
 import {
@@ -88,17 +89,7 @@ export function VaultProvider({ children }: { children: ReactNode }) {
         const { metadata, dek: initializedDek } =
             initializeEnvelope(masterPassword);
 
-        await initializeVaultMetadata({
-            salt: metadata.salt,
-            encrypted_dek: metadata.encryptedDek.ciphertext,
-            dek_iv: metadata.encryptedDek.iv,
-            dek_tag: metadata.encryptedDek.tag,
-            recovery_encrypted_dek: metadata.recoveryEncryptedDek.ciphertext,
-            recovery_iv: metadata.recoveryEncryptedDek.iv,
-            recovery_tag: metadata.recoveryEncryptedDek.tag,
-            is_biometric_enabled: 1,
-            created_at: Math.floor(Date.now() / 1000),
-        });
+        await initializeVaultMetadata(createVaultMetadataFromEnvelope(metadata));
 
         await storeSessionDek(initializedDek);
         setDek(initializedDek);
@@ -223,7 +214,6 @@ export function VaultProvider({ children }: { children: ReactNode }) {
             recovery_encrypted_dek: meta.recovery_encrypted_dek,
             recovery_iv: meta.recovery_iv,
             recovery_tag: meta.recovery_tag,
-            is_biometric_enabled: 1,
             created_at: meta.created_at,
         });
 

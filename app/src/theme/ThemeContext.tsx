@@ -16,14 +16,12 @@ interface ThemeContextType {
     theme: ThemePreference;
     colors: ThemeColors;
     setTheme: (preference: ThemePreference) => Promise<void>;
-    toggleTheme: () => Promise<void>;
 }
 
 const ThemeContext = createContext<ThemeContextType>({
     theme: "dark",
     colors: darkColors,
     setTheme: async () => {},
-    toggleTheme: async () => {},
 });
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
@@ -47,11 +45,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         await saveAppSettings({ theme: preference });
     }
 
-    async function toggleTheme() {
-        const next = theme === "dark" ? "light" : "dark";
-        await setTheme(next);
-    }
-
     const currentColors = theme === "light" ? lightColors : darkColors;
 
     return (
@@ -60,7 +53,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
                 theme,
                 colors: currentColors,
                 setTheme,
-                toggleTheme,
             }}
         >
             {children}

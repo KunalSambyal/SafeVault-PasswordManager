@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import {
-    Modal,
     View,
     Text,
     TextInput,
@@ -16,6 +15,7 @@ import {
     applyMigrationToExistingVault,
     MigrationCredentialItem,
 } from "../utils/migrationService";
+import { ModalFrame } from "./ModalFrame";
 
 interface ImportModalProps {
     visible: boolean;
@@ -69,22 +69,19 @@ export function ImportModal({
 
         setIsLoading(true);
 
-        setTimeout(async () => {
-            try {
-                const result = await pickAndDecryptMigrationFile(backupPassword);
-                setDecryptedItems(result.items);
-                setExportedDate(result.exportedAt);
-                setIsLoading(false);
-            } catch (err: any) {
-                setIsLoading(false);
-                if (err?.message !== "File selection cancelled.") {
-                    const message =
-                        err?.message || "Failed to decrypt backup file.";
-                    setErrorMessage(message);
-                    Alert.alert("Import Failed", message);
-                }
+        try {
+            const result = await pickAndDecryptMigrationFile(backupPassword);
+            setDecryptedItems(result.items);
+            setExportedDate(result.exportedAt);
+            setIsLoading(false);
+        } catch (err: any) {
+            setIsLoading(false);
+            if (err?.message !== "File selection cancelled.") {
+                const message = err?.message || "Failed to decrypt backup file.";
+                setErrorMessage(message);
+                Alert.alert("Import Failed", message);
             }
-        }, 50);
+        }
     }
 
     async function handleApplyImport(mode: "merge" | "replace") {
@@ -93,54 +90,41 @@ export function ImportModal({
         setIsLoading(true);
         setErrorMessage("");
 
-        setTimeout(async () => {
-            try {
-                const result = await applyMigrationToExistingVault(
-                    decryptedItems,
-                    dek,
-                    mode,
+        try {
+            const result = await applyMigrationToExistingVault(
+                decryptedItems,
+                dek,
+                mode,
+            );
+
+            setIsLoading(false);
+            handleClose();
+            onSuccess();
+
+            if (mode === "replace") {
+                Alert.alert(
+                    "Vault Restored",
+                    `Replaced existing vault with ${result.importedCount} credentials.`,
                 );
-
-                setIsLoading(false);
-                handleClose();
-                onSuccess();
-
-                if (mode === "replace") {
-                    Alert.alert(
-                        "Vault Restored",
-                        `Replaced existing vault with ${result.importedCount} credentials.`,
-                    );
-                } else {
-                    Alert.alert(
-                        "Vault Merged",
-                        `Import complete: ${result.importedCount} new entries added, ${result.updatedCount} existing entries updated.`,
-                    );
-                }
-            } catch (err: any) {
-                setIsLoading(false);
-                setErrorMessage(err?.message || "Failed to import credentials.");
+            } else {
+                Alert.alert(
+                    "Vault Merged",
+                    `Import complete: ${result.importedCount} new entries added, ${result.updatedCount} existing entries updated.`,
+                );
             }
-        }, 50);
+        } catch (err: any) {
+            setIsLoading(false);
+            setErrorMessage(err?.message || "Failed to import credentials.");
+        }
     }
 
     return (
-        <Modal
+        <ModalFrame
             visible={visible}
-            transparent
-            animationType="slide"
-            onRequestClose={handleClose}
+            onClose={handleClose}
+            overlayPadding={20}
         >
-            <View style={styles.overlay}>
-                <View
-                    style={[
-                        styles.container,
-                        {
-                            backgroundColor: colors.surface,
-                            borderColor: colors.surfaceBorder,
-                        },
-                    ]}
-                >
-                    <View
+            <View
                         style={[
                             styles.header,
                             { borderBottomColor: colors.surfaceBorder },
@@ -424,28 +408,12 @@ export function ImportModal({
                                 </TouchableOpacity>
                             </>
                         )}
-                    </ScrollView>
-                </View>
-            </View>
-        </Modal>
+            </ScrollView>
+        </ModalFrame>
     );
 }
 
 const styles = StyleSheet.create({
-    overlay: {
-        flex: 1,
-        backgroundColor: "rgba(0, 0, 0, 0.75)",
-        justifyContent: "center",
-        alignItems: "center",
-        padding: 20,
-    },
-    container: {
-        width: "100%",
-        maxHeight: "90%",
-        borderRadius: 12,
-        borderWidth: 1,
-        overflow: "hidden",
-    },
     header: {
         flexDirection: "row",
         justifyContent: "space-between",

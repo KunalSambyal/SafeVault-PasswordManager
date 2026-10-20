@@ -77,7 +77,7 @@ export function UnlockScreen() {
         }
     }
 
-    function handleUnlock() {
+    async function handleUnlock() {
         setErrorMessage("");
 
         if (useRecovery) {
@@ -88,39 +88,32 @@ export function UnlockScreen() {
 
             setIsLoading(true);
 
-            setTimeout(async () => {
-                try {
-                    // 1. Verify 12 words can decrypt the vault
-                    const ok = await prepareRecoveryWithMnemonic(mnemonic);
-                    if (!ok) {
-                        setErrorMessage("Invalid 12-word recovery phrase.");
-                        setIsLoading(false);
-                        return;
-                    }
-
-                    // 2. Dual-factor verification: require device fingerprint or PIN
-                    const biometricOk = await authenticateWithBiometrics(
-                        "Confirm fingerprint or PIN to authorize vault recovery",
-                    );
-
-                    if (!biometricOk) {
-                        abortRecovery();
-                        setErrorMessage(
-                            "Biometric confirmation required to authorize recovery.",
-                        );
-                        setIsLoading(false);
-                        return;
-                    }
-
-                    // 3. Both factors passed: transition to setting a new Master Password
-                    setIsResettingPassword(true);
-                    setIsLoading(false);
-                } catch {
-                    abortRecovery();
-                    setErrorMessage("Recovery verification failed.");
-                    setIsLoading(false);
+            try {
+                const ok = await prepareRecoveryWithMnemonic(mnemonic);
+                if (!ok) {
+                    setErrorMessage("Invalid 12-word recovery phrase.");
+                    return;
                 }
-            }, 50);
+
+                const biometricOk = await authenticateWithBiometrics(
+                    "Confirm fingerprint or PIN to authorize vault recovery",
+                );
+
+                if (!biometricOk) {
+                    abortRecovery();
+                    setErrorMessage(
+                        "Biometric confirmation required to authorize recovery.",
+                    );
+                    return;
+                }
+
+                setIsResettingPassword(true);
+            } catch {
+                abortRecovery();
+                setErrorMessage("Recovery verification failed.");
+            } finally {
+                setIsLoading(false);
+            }
         } else {
             if (!password) {
                 setErrorMessage("Please enter your Master Password.");
@@ -129,18 +122,16 @@ export function UnlockScreen() {
 
             setIsLoading(true);
 
-            setTimeout(async () => {
-                try {
-                    const ok = await unlockWithPassword(password);
-                    if (!ok) {
-                        setErrorMessage("Incorrect Master Password.");
-                    }
-                } catch {
-                    setErrorMessage("An error occurred during vault unlock.");
-                } finally {
-                    setIsLoading(false);
+            try {
+                const ok = await unlockWithPassword(password);
+                if (!ok) {
+                    setErrorMessage("Incorrect Master Password.");
                 }
-            }, 50);
+            } catch {
+                setErrorMessage("An error occurred during vault unlock.");
+            } finally {
+                setIsLoading(false);
+            }
         }
     }
 
@@ -159,17 +150,13 @@ export function UnlockScreen() {
 
         setIsLoading(true);
 
-        setTimeout(async () => {
-            try {
-                await resetMasterPassword(newPassword);
-                // Reset completes unlock and lands in Dashboard
-            } catch (err: any) {
-                setErrorMessage(
-                    err?.message || "Failed to update Master Password.",
-                );
-                setIsLoading(false);
-            }
-        }, 50);
+        try {
+            await resetMasterPassword(newPassword);
+        } catch (err: any) {
+            setErrorMessage(err?.message || "Failed to update Master Password.");
+        } finally {
+            setIsLoading(false);
+        }
     }
 
     // Step 2 of Recovery: Set a new Master Password

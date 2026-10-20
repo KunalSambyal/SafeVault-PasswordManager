@@ -55,20 +55,16 @@ export function OnboardingScreen() {
 
         setIsLoading(true);
 
-        setTimeout(async () => {
-            try {
-                const generatedPhrase = await setupNewVault(password);
-                setMnemonic(generatedPhrase);
-                setStep("mnemonic");
-            } catch (err: any) {
-                console.error("Setup error:", err);
-                setErrorMessage(
-                    err?.message || "Failed to initialize secure vault.",
-                );
-            } finally {
-                setIsLoading(false);
-            }
-        }, 50);
+        try {
+            const generatedPhrase = await setupNewVault(password);
+            setMnemonic(generatedPhrase);
+            setStep("mnemonic");
+        } catch (err: any) {
+            console.error("Setup error:", err);
+            setErrorMessage(err?.message || "Failed to initialize secure vault.");
+        } finally {
+            setIsLoading(false);
+        }
     }
 
     async function handleDecryptMigrationFile() {
@@ -83,22 +79,19 @@ export function OnboardingScreen() {
 
         setIsLoading(true);
 
-        setTimeout(async () => {
-            try {
-                const result = await pickAndDecryptMigrationFile(backupPassword);
-                setImportedItems(result.items);
-                setImportedDate(result.exportedAt);
-            } catch (err: any) {
-                if (err?.message !== "File selection cancelled.") {
-                    const message =
-                        err?.message || "Failed to decrypt backup file.";
-                    setErrorMessage(message);
-                    Alert.alert("Import Failed", message);
-                }
-            } finally {
-                setIsLoading(false);
+        try {
+            const result = await pickAndDecryptMigrationFile(backupPassword);
+            setImportedItems(result.items);
+            setImportedDate(result.exportedAt);
+        } catch (err: any) {
+            if (err?.message !== "File selection cancelled.") {
+                const message = err?.message || "Failed to decrypt backup file.";
+                setErrorMessage(message);
+                Alert.alert("Import Failed", message);
             }
-        }, 50);
+        } finally {
+            setIsLoading(false);
+        }
     }
 
     async function handleCompleteImportSetup() {
@@ -119,22 +112,15 @@ export function OnboardingScreen() {
 
         setIsLoading(true);
 
-        setTimeout(async () => {
-            try {
-                const phrase = await setupVaultFromMigration(
-                    importedItems,
-                    password,
-                );
-                setMnemonic(phrase);
-                setStep("mnemonic");
-            } catch (err: any) {
-                setErrorMessage(
-                    err?.message || "Failed to initialize vault from backup.",
-                );
-            } finally {
-                setIsLoading(false);
-            }
-        }, 50);
+        try {
+            const phrase = await setupVaultFromMigration(importedItems, password);
+            setMnemonic(phrase);
+            setStep("mnemonic");
+        } catch (err: any) {
+            setErrorMessage(err?.message || "Failed to initialize vault from backup.");
+        } finally {
+            setIsLoading(false);
+        }
     }
 
     async function handleFinishOnboarding() {

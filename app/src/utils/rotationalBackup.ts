@@ -1,5 +1,6 @@
 import * as FileSystem from "expo-file-system/legacy";
 import { getDatabase } from "../db/connection";
+import { initializeVaultMetadata } from "../db/metadataRepository";
 import { VaultMetadata, CredentialRecord } from "../types/database";
 
 export interface RotationalBackupPayload {
@@ -152,25 +153,7 @@ export async function restoreRotationalBackup(
     // Take a safety snapshot of current state before overriding
     await performRotationalBackup();
 
-    // Restore metadata
-    await db.runAsync(
-        `INSERT OR REPLACE INTO vault_metadata (
-          id, salt, encrypted_dek, dek_iv, dek_tag,
-          recovery_encrypted_dek, recovery_iv, recovery_tag,
-          is_biometric_enabled, created_at
-        ) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
-        [
-            payload.metadata.salt,
-            payload.metadata.encrypted_dek,
-            payload.metadata.dek_iv,
-            payload.metadata.dek_tag,
-            payload.metadata.recovery_encrypted_dek,
-            payload.metadata.recovery_iv,
-            payload.metadata.recovery_tag,
-            payload.metadata.is_biometric_enabled,
-            payload.metadata.created_at,
-        ],
-    );
+    await initializeVaultMetadata(payload.metadata);
 
     // Wipe and restore credentials
     await db.runAsync("DELETE FROM credentials;");
