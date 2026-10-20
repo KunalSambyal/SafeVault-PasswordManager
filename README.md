@@ -1,49 +1,30 @@
 # SafeVault
 
-SafeVault is an ultra-secure, zero-knowledge, offline-first password manager engineered for Android using React Native, Expo (TypeScript), and SQLite.
+SafeVault is an Android password manager built with React Native, Expo, TypeScript, and SQLite. It keeps vault data on the device and is configured without Android network permissions.
 
-The application ensures complete privacy by keeping your sensitive credentials isolated entirely on your device, with zero internet permissions, no trackers, and hardware-backed biometric security.
+## Features
 
----
+- Master-password vault setup with a 12-word recovery phrase
+- Biometric or device authentication for supported vault actions
+- Encrypted credential storage in SQLite
+- Password and passphrase generator
+- Three rotating local backup snapshots
+- Password-protected export and import for moving a vault between devices
+- Configurable auto-lock timeout and dark/light themes
+- Built-in offline help
 
-## Beta Release (v1.2.0-beta)
+## Download
 
-SafeVault is currently in its public **Beta (v1.2.0-beta)** testing release!
+The current beta release is **v1.2.0-beta**.
 
-- **Download APK:** Download the compiled standalone APK from the [GitHub Releases](https://github.com/KunalSambyal/SafeVault-PasswordManager/releases/tag/v1.2.0).
-- **Feedback & Bug Reports:** Download the beta app, test it on your device, and report any issues or suggestions. If you support privacy-focused, offline software, giving a star on GitHub is greatly appreciated!
+- [Download the APK](https://github.com/KunalSambyal/SafeVault-PasswordManager/releases/tag/v1.2.0)
+- [View all releases](https://github.com/KunalSambyal/SafeVault-PasswordManager/releases)
 
----
+## Documentation
 
-## Key Features
-
-- **Zero-Network Isolation:** Built without internet permissions. Your passwords never touch a server, cloud, or network.
-- **Biometric Security:** Unlock your vault and authorize actions quickly with your fingerprint, face, or device PIN.
-- **Encrypted Vault Export & Import:** Transfer your credentials safely to another device using a password-protected backup file.
-- **Automated Local Backups:** Keeps a rolling history of your vault on your device before updates, allowing instant snapshot restores.
-- **Password & Passphrase Generator:** Generate strong, random passwords or easy-to-remember multi-word passphrases with custom rules.
-- **12-Word Recovery Phrase:** Independent disaster recovery phrase to regain access or reset your Master Password if forgotten.
-- **Customizable Experience:** Choose your preferred auto-lock timeout and switch between Dark and Light themes.
-- **Built-in Help & Guide:** Clear instructions inside the app covering master passwords, recovery phrases, and backup restoration.
-
----
-
-## Project Documentation
-
-Detailed technical specifications and roadmaps:
-
-- **[ARCHITECTURE.md](ARCHITECTURE.md):** System architecture, cryptographic specifications, threat model, database schema, and design tokens.
-- **[PLAN.md](PLAN.md):** Project roadmap, implementation milestones, and feature progress.
-
----
-
-## Download Beta
-
-- **Release Tag (v1.2.0):** [https://github.com/KunalSambyal/SafeVault-PasswordManager/releases/tag/v1.2.0](https://github.com/KunalSambyal/SafeVault-PasswordManager/releases/tag/v1.2.0)
-- **All Releases:** [https://github.com/KunalSambyal/SafeVault-PasswordManager/releases](https://github.com/KunalSambyal/SafeVault-PasswordManager/releases)
-
----
+- [Architecture](ARCHITECTURE.md) explains the application structure, data flow, storage, and migration design.
+- [Roadmap](PLAN.md) lists the current release scope and planned work.
 
 ## License
 
-This project is open-source software licensed under the [MIT License](LICENSE). You are free to use, modify, distribute, and adapt this software for your own needs.
+SafeVault is released under the [MIT License](LICENSE).
