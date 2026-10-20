@@ -13,13 +13,6 @@ SafeVault is an Android password manager built with React Native, Expo, TypeScri
 - Configurable auto-lock timeout and dark/light themes
 - Built-in offline help
 
-## Download
-
-The current beta release is **v1.2.0-beta**.
-
-- [Download the APK](https://github.com/KunalSambyal/SafeVault-PasswordManager/releases/tag/v1.2.0)
-- [View all releases](https://github.com/KunalSambyal/SafeVault-PasswordManager/releases)
-
 ## Documentation
 
 - [Architecture](ARCHITECTURE.md) explains the application structure, data flow, storage, and migration design.
