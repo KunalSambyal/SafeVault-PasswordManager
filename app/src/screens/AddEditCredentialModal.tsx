@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
     View,
     Text,
@@ -6,13 +6,14 @@ import {
     TouchableOpacity,
     StyleSheet,
     Alert,
+    ScrollView,
 } from "react-native";
 import { RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useVault } from "../hooks/useVault";
 import { useTheme } from "../theme/ThemeContext";
 import { ThemeColors } from "../theme/colors";
-import { addCredential, updateCredential } from "../db";
+import { addCredential, updateCredential, getDistinctIdentities } from "../db";
 import { encryptAESGCM } from "../crypto";
 import { PasswordStrengthBar } from "../components/PasswordStrengthBar";
 import { PasswordGeneratorModal } from "../components/PasswordGeneratorModal";
@@ -41,8 +42,32 @@ export function AddEditCredentialModal({
     const [password, setPassword] = useState("");
     const [isMasked, setIsMasked] = useState(true);
     const [generatorVisible, setGeneratorVisible] = useState(false);
+    const [existingIdentities, setExistingIdentities] = useState<string[]>([]);
+
+    useEffect(() => {
+        let isMounted = true;
+        getDistinctIdentities()
+            .then((list) => {
+                if (isMounted) setExistingIdentities(list);
+            })
+            .catch((err) => {
+                console.warn("Failed to load distinct identities", err);
+            });
+        return () => {
+            isMounted = false;
+        };
+    }, []);
 
     const styles = useMemo(() => createStyles(colors), [colors]);
+
+    const visibleSuggestions = useMemo(() => {
+        if (!identity.trim()) {
+            return existingIdentities;
+        }
+        return existingIdentities.filter((item) =>
+            item.toLowerCase().includes(identity.toLowerCase()),
+        );
+    }, [existingIdentities, identity]);
 
     async function handleSave() {
         if (!identity.trim() || !label.trim() || !password.trim()) {
@@ -98,6 +123,40 @@ export function AddEditCredentialModal({
                 value={identity}
                 onChangeText={setIdentity}
             />
+
+            {visibleSuggestions.length > 0 && (
+                <View style={styles.suggestionsContainer}>
+                    <Text style={styles.suggestionTitle}>Existing Accounts</Text>
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.suggestionList}
+                    >
+                        {visibleSuggestions.map((item) => (
+                            <TouchableOpacity
+                                key={item}
+                                style={[
+                                    styles.suggestionPill,
+                                    identity === item &&
+                                        styles.suggestionPillSelected,
+                                ]}
+                                onPress={() => setIdentity(item)}
+                            >
+                                <Text
+                                    style={[
+                                        styles.suggestionPillText,
+                                        identity === item &&
+                                            styles.suggestionPillTextSelected,
+                                    ]}
+                                    numberOfLines={1}
+                                >
+                                    {item}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
+                </View>
+            )}
 
             <Text style={styles.label}>Service Label</Text>
             <TextInput
@@ -204,6 +263,44 @@ function createStyles(colors: ThemeColors) {
             padding: 14,
             marginBottom: 16,
             fontSize: 16,
+        },
+        suggestionsContainer: {
+            marginTop: -8,
+            marginBottom: 14,
+        },
+        suggestionTitle: {
+            fontSize: 11,
+            color: colors.textMuted,
+            marginBottom: 6,
+            fontWeight: "600",
+            textTransform: "uppercase",
+            letterSpacing: 0.5,
+        },
+        suggestionList: {
+            flexDirection: "row",
+            gap: 8,
+            paddingVertical: 2,
+        },
+        suggestionPill: {
+            backgroundColor: colors.cardBackground,
+            borderWidth: 1,
+            borderColor: colors.surfaceBorder,
+            borderRadius: 16,
+            paddingHorizontal: 12,
+            paddingVertical: 6,
+        },
+        suggestionPillSelected: {
+            backgroundColor: colors.primary,
+            borderColor: colors.primary,
+        },
+        suggestionPillText: {
+            color: colors.textSecondary,
+            fontSize: 12,
+            fontWeight: "500",
+        },
+        suggestionPillTextSelected: {
+            color: colors.background,
+            fontWeight: "700",
         },
         passwordRow: {
             flexDirection: "row",

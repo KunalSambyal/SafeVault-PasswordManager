@@ -157,7 +157,8 @@ export function SidebarDrawer({
                                     <TouchableOpacity
                                         style={[
                                             styles.themePill,
-                                            theme === "dark" && styles.themePillActive,
+                                            theme === "dark" &&
+                                                styles.themePillActive,
                                         ]}
                                         onPress={() => setTheme("dark")}
                                     >
@@ -174,7 +175,8 @@ export function SidebarDrawer({
                                     <TouchableOpacity
                                         style={[
                                             styles.themePill,
-                                            theme === "light" && styles.themePillActive,
+                                            theme === "light" &&
+                                                styles.themePillActive,
                                         ]}
                                         onPress={() => setTheme("light")}
                                     >
@@ -251,7 +253,8 @@ export function SidebarDrawer({
                             >
                                 <Text style={styles.itemTitle}>Settings</Text>
                                 <Text style={styles.itemSubtitle}>
-                                    Security parameters, GFS snapshots, and timeouts
+                                    Security parameters, GFS snapshots, and
+                                    timeouts
                                 </Text>
                             </TouchableOpacity>
                         </View>
@@ -329,6 +332,11 @@ export function SidebarDrawer({
                                             available for review on GitHub.
                                         </Text>
 
+                                        <Text style={styles.warningLine}>
+                                            Notice: Always keep your 12-word
+                                            recovery phrase backed up safely.
+                                        </Text>
+
                                         <Text style={styles.starSupportText}>
                                             If you find SafeVault useful,
                                             consider giving the GitHub
@@ -350,17 +358,8 @@ export function SidebarDrawer({
 
                         {/* 6. Feedback & Beta Notice */}
                         <View style={styles.section}>
-                            <Text style={styles.sectionHeader}>
-                                FEEDBACK & BETA NOTICE
-                            </Text>
+                            <Text style={styles.sectionHeader}>FEEDBACK</Text>
                             <View style={styles.infoCard}>
-                                <Text style={styles.infoCardTitle}>
-                                    Beta Testing (v1.2.0)
-                                </Text>
-                                <Text style={styles.warningLine}>
-                                    Notice: SafeVault is an offline tool. Always keep
-                                    your 12-word recovery phrase backed up safely.
-                                </Text>
                                 <Text style={styles.infoTextMuted}>
                                     Feedbacks, bug reports, and suggestions are
                                     highly appreciated. You can post an issue on
@@ -396,6 +395,9 @@ export function SidebarDrawer({
                             <View style={styles.infoCard}>
                                 <Text style={styles.infoCardTitle}>
                                     Release Channel
+                                </Text>
+                                <Text style={styles.infoTextMuted}>
+                                    Current Version (v1.2.2)
                                 </Text>
                                 <Text style={styles.infoTextMuted}>
                                     Download latest updates or check for new

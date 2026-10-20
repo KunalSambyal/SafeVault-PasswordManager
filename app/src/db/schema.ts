@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS credentials (
     encrypted_password TEXT NOT NULL,
     iv TEXT NOT NULL,
     auth_tag TEXT NOT NULL,
+    is_pinned INTEGER DEFAULT 0,
     created_at INTEGER DEFAULT (strftime('%s', 'now')),
     updated_at INTEGER DEFAULT (strftime('%s', 'now'))
 );
@@ -31,4 +32,8 @@ CREATE INDEX IF NOT EXISTS idx_credentials_identity ON credentials (identity);
 
 export const CREATE_INDEX_CREDENTIALS_LABEL = `
 CREATE INDEX IF NOT EXISTS idx_credentials_label ON credentials (label);
+`;
+
+export const CREATE_INDEX_CREDENTIALS_PINNED = `
+CREATE INDEX IF NOT EXISTS idx_credentials_pinned ON credentials (is_pinned);
 `;

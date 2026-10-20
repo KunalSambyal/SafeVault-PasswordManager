@@ -10,6 +10,7 @@ import {
     ScrollView,
 } from "react-native";
 import { useTheme } from "../theme/ThemeContext";
+import { PasswordInput } from "./PasswordInput";
 import {
     pickAndDecryptMigrationFile,
     applyMigrationToExistingVault,
@@ -194,19 +195,8 @@ export function ImportModal({
                                 >
                                     Backup Password
                                 </Text>
-                                <TextInput
-                                    style={[
-                                        styles.input,
-                                        {
-                                            backgroundColor:
-                                                colors.inputBackground,
-                                            borderColor: colors.surfaceBorder,
-                                            color: colors.textPrimary,
-                                        },
-                                    ]}
+                                <PasswordInput
                                     placeholder="Enter backup password"
-                                    placeholderTextColor={colors.textMuted}
-                                    secureTextEntry
                                     value={backupPassword}
                                     onChangeText={(val) => {
                                         setBackupPassword(val);

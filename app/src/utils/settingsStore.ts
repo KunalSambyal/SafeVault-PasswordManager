@@ -2,10 +2,15 @@ import * as SecureStore from "expo-secure-store";
 
 export type AutoLockTimeout = 0 | 60 | 300 | 900;
 export type ThemePreference = "dark" | "light";
+export type SortOrder = "name_asc" | "name_desc" | "date_desc" | "date_asc";
 
 export interface AppSettings {
     autoLockTimeout: AutoLockTimeout;
     theme: ThemePreference;
+    requireBiometricForCopy: boolean;
+    pinnedIdentities: string[];
+    identitySortOrder: SortOrder;
+    credentialSortOrder: SortOrder;
 }
 
 const SETTINGS_KEY = "safevault_user_settings";
@@ -13,9 +18,20 @@ const SETTINGS_KEY = "safevault_user_settings";
 const DEFAULT_SETTINGS: AppSettings = {
     autoLockTimeout: 0,
     theme: "dark",
+    requireBiometricForCopy: true,
+    pinnedIdentities: [],
+    identitySortOrder: "name_asc",
+    credentialSortOrder: "name_asc",
 };
 
 let cachedSettings: AppSettings | null = null;
+
+const VALID_SORT_ORDERS: SortOrder[] = [
+    "name_asc",
+    "name_desc",
+    "date_desc",
+    "date_asc",
+];
 
 export async function getAppSettings(): Promise<AppSettings> {
     if (cachedSettings) {
@@ -35,6 +51,23 @@ export async function getAppSettings(): Promise<AppSettings> {
                     parsed.theme === "light" || parsed.theme === "dark"
                         ? parsed.theme
                         : DEFAULT_SETTINGS.theme,
+                requireBiometricForCopy:
+                    typeof parsed.requireBiometricForCopy === "boolean"
+                        ? parsed.requireBiometricForCopy
+                        : DEFAULT_SETTINGS.requireBiometricForCopy,
+                pinnedIdentities: Array.isArray(parsed.pinnedIdentities)
+                    ? parsed.pinnedIdentities
+                    : DEFAULT_SETTINGS.pinnedIdentities,
+                identitySortOrder: VALID_SORT_ORDERS.includes(
+                    parsed.identitySortOrder,
+                )
+                    ? parsed.identitySortOrder
+                    : DEFAULT_SETTINGS.identitySortOrder,
+                credentialSortOrder: VALID_SORT_ORDERS.includes(
+                    parsed.credentialSortOrder,
+                )
+                    ? parsed.credentialSortOrder
+                    : DEFAULT_SETTINGS.credentialSortOrder,
             };
             return cachedSettings;
         }

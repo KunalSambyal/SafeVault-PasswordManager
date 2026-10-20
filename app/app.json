@@ -2,13 +2,13 @@
     "expo": {
         "name": "SafeVault",
         "slug": "safevault",
-        "version": "1.2.0",
+        "version": "1.2.2",
         "orientation": "portrait",
         "icon": "./assets/icon.png",
         "userInterfaceStyle": "dark",
         "android": {
             "package": "com.safevault.app",
-            "versionCode": 2,
+            "versionCode": 3,
             "adaptiveIcon": {
                 "backgroundColor": "#0a090d",
                 "foregroundImage": "./assets/android-icon-foreground.png"

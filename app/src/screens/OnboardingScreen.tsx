@@ -12,6 +12,7 @@ import {
 import { useVault } from "../hooks/useVault";
 import { useTheme } from "../theme/ThemeContext";
 import { ThemeColors } from "../theme/colors";
+import { PasswordInput } from "../components/PasswordInput";
 import {
     pickAndDecryptMigrationFile,
     MigrationCredentialItem,
@@ -211,11 +212,8 @@ export function OnboardingScreen() {
                         <Text style={styles.fieldLabel}>
                             Backup Password (used during export)
                         </Text>
-                        <TextInput
-                            style={styles.input}
+                        <PasswordInput
                             placeholder="Enter backup password"
-                            placeholderTextColor={colors.textMuted}
-                            secureTextEntry
                             value={backupPassword}
                             onChangeText={(text) => {
                                 setBackupPassword(text);
@@ -274,11 +272,8 @@ export function OnboardingScreen() {
                         <Text style={styles.fieldLabel}>
                             Create Master Password for this Device
                         </Text>
-                        <TextInput
-                            style={styles.input}
+                        <PasswordInput
                             placeholder="Device Master Password (min 8 chars)"
-                            placeholderTextColor={colors.textMuted}
-                            secureTextEntry
                             value={password}
                             onChangeText={(text) => {
                                 setPassword(text);
@@ -286,11 +281,8 @@ export function OnboardingScreen() {
                             }}
                         />
 
-                        <TextInput
-                            style={styles.input}
+                        <PasswordInput
                             placeholder="Confirm Device Master Password"
-                            placeholderTextColor={colors.textMuted}
-                            secureTextEntry
                             value={confirmPassword}
                             onChangeText={(text) => {
                                 setConfirmPassword(text);
@@ -347,11 +339,8 @@ export function OnboardingScreen() {
                 <Text style={styles.errorBanner}>{errorMessage}</Text>
             ) : null}
 
-            <TextInput
-                style={styles.input}
+            <PasswordInput
                 placeholder="Master Password (min 8 chars)"
-                placeholderTextColor={colors.textMuted}
-                secureTextEntry
                 value={password}
                 onChangeText={(text) => {
                     setPassword(text);
@@ -359,11 +348,8 @@ export function OnboardingScreen() {
                 }}
             />
 
-            <TextInput
-                style={styles.input}
+            <PasswordInput
                 placeholder="Confirm Master Password"
-                placeholderTextColor={colors.textMuted}
-                secureTextEntry
                 value={confirmPassword}
                 onChangeText={(text) => {
                     setConfirmPassword(text);

@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import {
     View,
     Text,
-    TextInput,
     TouchableOpacity,
     StyleSheet,
     ActivityIndicator,
@@ -11,6 +10,7 @@ import {
 } from "react-native";
 import { useTheme } from "../theme/ThemeContext";
 import { exportVaultMigration } from "../utils/migrationService";
+import { PasswordInput } from "./PasswordInput";
 import { ModalFrame } from "./ModalFrame";
 
 interface ExportModalProps {
@@ -145,18 +145,8 @@ export function ExportModal({ visible, onClose, dek }: ExportModalProps) {
                         >
                             Backup Password (min 8 characters)
                         </Text>
-                        <TextInput
-                            style={[
-                                styles.input,
-                                {
-                                    backgroundColor: colors.inputBackground,
-                                    borderColor: colors.surfaceBorder,
-                                    color: colors.textPrimary,
-                                },
-                            ]}
+                        <PasswordInput
                             placeholder="Enter a strong backup password"
-                            placeholderTextColor={colors.textMuted}
-                            secureTextEntry
                             value={backupPassword}
                             onChangeText={(val) => {
                                 setBackupPassword(val);
@@ -172,18 +162,8 @@ export function ExportModal({ visible, onClose, dek }: ExportModalProps) {
                         >
                             Confirm Backup Password
                         </Text>
-                        <TextInput
-                            style={[
-                                styles.input,
-                                {
-                                    backgroundColor: colors.inputBackground,
-                                    borderColor: colors.surfaceBorder,
-                                    color: colors.textPrimary,
-                                },
-                            ]}
+                        <PasswordInput
                             placeholder="Confirm backup password"
-                            placeholderTextColor={colors.textMuted}
-                            secureTextEntry
                             value={confirmPassword}
                             onChangeText={(val) => {
                                 setConfirmPassword(val);

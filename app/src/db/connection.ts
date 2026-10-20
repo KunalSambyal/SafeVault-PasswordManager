@@ -4,6 +4,7 @@ import {
     CREATE_CREDENTIALS_TABLE,
     CREATE_INDEX_CREDENTIALS_LABEL,
     CREATE_INDEX_CREDENTIALS_IDENTITY,
+    CREATE_INDEX_CREDENTIALS_PINNED,
 } from "./schema";
 
 const DATABASE_NAME = "safevault.db";
@@ -27,5 +28,16 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
     await databaseInstance.execAsync(CREATE_INDEX_CREDENTIALS_IDENTITY);
     await databaseInstance.execAsync(CREATE_INDEX_CREDENTIALS_LABEL);
 
-    return databaseInstance
+    // Non-destructive migration: add is_pinned column if upgrading from earlier version
+    try {
+        await databaseInstance.execAsync(
+            "ALTER TABLE credentials ADD COLUMN is_pinned INTEGER DEFAULT 0;",
+        );
+    } catch {
+        // Column already exists, safe to ignore
+    }
+
+    await databaseInstance.execAsync(CREATE_INDEX_CREDENTIALS_PINNED);
+
+    return databaseInstance;
 }

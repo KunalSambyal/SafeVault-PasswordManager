@@ -7,6 +7,7 @@ import {
     ScrollView,
     Alert,
     ActivityIndicator,
+    Switch,
 } from "react-native";
 import { useTheme } from "../theme/ThemeContext";
 import {
@@ -70,6 +71,12 @@ export function SettingsModal({
     async function handleAutoLockChange(timeout: AutoLockTimeout) {
         if (!settings) return;
         const updated = await saveAppSettings({ autoLockTimeout: timeout });
+        setSettings(updated);
+    }
+
+    async function handleRequireBiometricForCopyChange(value: boolean) {
+        if (!settings) return;
+        const updated = await saveAppSettings({ requireBiometricForCopy: value });
         setSettings(updated);
     }
 
@@ -279,6 +286,58 @@ export function SettingsModal({
                                     >
                                         SECURITY PREFERENCES
                                     </Text>
+
+                                    {/* Require Biometric to Copy */}
+                                    <View
+                                        style={[
+                                            styles.card,
+                                            {
+                                                backgroundColor:
+                                                    colors.cardBackground,
+                                                borderColor:
+                                                    colors.surfaceBorder,
+                                                marginBottom: 10,
+                                            },
+                                        ]}
+                                    >
+                                        <View style={styles.switchRow}>
+                                            <View style={{ flex: 1, paddingRight: 12 }}>
+                                                <Text
+                                                    style={[
+                                                        styles.rowLabel,
+                                                        { color: colors.textPrimary },
+                                                    ]}
+                                                >
+                                                    Biometric Prompt for Copy
+                                                </Text>
+                                                <Text
+                                                    style={[
+                                                        styles.rowHint,
+                                                        {
+                                                            color: colors.textSecondary,
+                                                            marginBottom: 0,
+                                                        },
+                                                    ]}
+                                                >
+                                                    Require biometric verification before copying passwords to clipboard
+                                                </Text>
+                                            </View>
+                                            <Switch
+                                                value={
+                                                    settings?.requireBiometricForCopy ??
+                                                    true
+                                                }
+                                                onValueChange={
+                                                    handleRequireBiometricForCopyChange
+                                                }
+                                                trackColor={{
+                                                    false: colors.surfaceBorder,
+                                                    true: colors.primary,
+                                                }}
+                                                thumbColor={colors.background}
+                                            />
+                                        </View>
+                                    </View>
 
                                     {/* Auto-Lock */}
                                     <View

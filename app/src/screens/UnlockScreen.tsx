@@ -10,6 +10,7 @@ import {
 import { useVault } from "../hooks/useVault";
 import { useTheme } from "../theme/ThemeContext";
 import { ThemeColors } from "../theme/colors";
+import { PasswordInput } from "../components/PasswordInput";
 import {
     authenticateWithBiometrics,
     isBiometricsAvailable,
@@ -173,11 +174,8 @@ export function UnlockScreen() {
                     <Text style={styles.errorBanner}>{errorMessage}</Text>
                 ) : null}
 
-                <TextInput
-                    style={styles.input}
+                <PasswordInput
                     placeholder="New Master Password (min 8 chars)"
-                    placeholderTextColor={colors.textMuted}
-                    secureTextEntry
                     value={newPassword}
                     onChangeText={(text) => {
                         setNewPassword(text);
@@ -185,11 +183,8 @@ export function UnlockScreen() {
                     }}
                 />
 
-                <TextInput
-                    style={styles.input}
+                <PasswordInput
                     placeholder="Confirm New Master Password"
-                    placeholderTextColor={colors.textMuted}
-                    secureTextEntry
                     value={confirmNewPassword}
                     onChangeText={(text) => {
                         setConfirmNewPassword(text);
@@ -244,11 +239,8 @@ export function UnlockScreen() {
                     }}
                 />
             ) : (
-                <TextInput
-                    style={styles.input}
+                <PasswordInput
                     placeholder="Master Password"
-                    placeholderTextColor={colors.textMuted}
-                    secureTextEntry
                     value={password}
                     onChangeText={(text) => {
                         setPassword(text);
